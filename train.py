@@ -48,7 +48,11 @@ if __name__ == "__main__":
     else:
         print('Using a new model for training.')
         rgbd_model = rgbd_model(rgb_model, d_model, mode)
+<<<<<<< HEAD
         rgbd_model = train(rgbd_model, data, label)
+=======
+        rgbd_model = train(rgbd_model, data)
+>>>>>>> 2eac43400ccff2b47f938d06efaff3b2feb29589
     # save model
     save_path = './model/save/' + os.time + '-model.ckpt'
     torch.save(rgbd_model.sate_dict(), save_path)

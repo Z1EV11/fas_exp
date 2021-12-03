@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 
+<<<<<<< HEAD
 """ Common """
 # Cross Modal Focal Loss
 class CMF_Loss(nn.Module):
@@ -34,13 +35,22 @@ class CD_Conv2d(nn.Module):
             return out_normal - self.theta * out_diff
 
 # DenseNet - Dense Block
+=======
+# common
+def cd_conv2d(in_channels, out_channels):
+    return 0
+
+>>>>>>> 2eac43400ccff2b47f938d06efaff3b2feb29589
 def conv_block(in_channels, out_channels):
     blk = nn.Sequential(nn.BatchNorm2d(in_channels), 
                         nn.ReLU(),
                         nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1))
     return blk
 
+<<<<<<< HEAD
 # DenseNet - Transition Block
+=======
+>>>>>>> 2eac43400ccff2b47f938d06efaff3b2feb29589
 def transition_block(in_channels, out_channels):
     blk = nn.Sequential(
             nn.BatchNorm2d(in_channels), 
@@ -50,7 +60,11 @@ def transition_block(in_channels, out_channels):
     return blk
 
 
+<<<<<<< HEAD
 """ Model """
+=======
+# model
+>>>>>>> 2eac43400ccff2b47f938d06efaff3b2feb29589
 class rgbd_model(nn.Module):
     def __init__(self, rgb_model, d_model, mode):
         super(rgbd_model, self).__init__()
@@ -68,24 +82,40 @@ class rgbd_model(nn.Module):
 class rgb_model(nn.Module):
     def __init__(self):
         super(rgb_model, self).__init__()
+<<<<<<< HEAD
         self.net = nn.Sequential(
+=======
+        self.rgb_net = nn.Sequential(
+>>>>>>> 2eac43400ccff2b47f938d06efaff3b2feb29589
             nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3),
             nn.BatchNorm2d(64), 
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
 
     def forward(self, x):
+<<<<<<< HEAD
         self.net(x)
+=======
+        self.rgb_net(x)
+>>>>>>> 2eac43400ccff2b47f938d06efaff3b2feb29589
 
 
 class d_model(nn.Module):
     def __init__(self):
         super(d_model, self).__init__()
+<<<<<<< HEAD
         self.net = nn.Sequential(
+=======
+        self.d_net = nn.Sequential(
+>>>>>>> 2eac43400ccff2b47f938d06efaff3b2feb29589
             nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3),
             nn.BatchNorm2d(64), 
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
     
     def forward(self, x):
+<<<<<<< HEAD
         self.net(x)
+=======
+        self.d_net(x)
+>>>>>>> 2eac43400ccff2b47f938d06efaff3b2feb29589
