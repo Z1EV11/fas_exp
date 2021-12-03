@@ -1,38 +1,55 @@
 import torch
 import torch.nn as nn
+import os
 
-from model.rgb_model import rgb_model 
-from model.d_model import d_model 
+from model.rgbd_model import rgbd_model, rgb_model, d_model
+from util.preprocess import get_data
+from util.loss import cmf_loss
 
-class rgbd_model(nn.model):
-    def __init__(self, rgb_model, d_model):
-        self.rgb_model = rgbd_model
-        self.d_model = d_model
-        pass
 
-def train():
-    pas
+# config
+mode = "train"
+learning_rate = 0.0001
+step_size = 500
+epochs = 100
+batch_size = 64
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+finetune = False
+save_path = './model/save/{}-model.ckpt'.format('')
+
+def finetune(rgbd_model, data):
+    return rgbd_model
+
+def train(rgbd_model, data, label):
+    loss = nn.MSELoss()
+    optimizer = torch.optim.Adam(rgbd_model.parameters(), lr=learning_rate)
+    for epoch in range(num_epochs):
+        # forward
+        pred = rgbd_model(data)
+        error = loss(pred, label)
+        # backward & optimize
+        optimizer.zero_grad()
+        error.backward()
+        optimizer.step() # gradient descent
+        if (epoch+1) % 5 == 0:
+            print ('Epoch [{}/{}], Error: {:.4f}'.format(epoch+1, num_epochs, error.item()))
+    return rgbd_model
+
 
 if __name__ == "__main__":
     # preprocessing
-    x, labels = get_date()
-    # rgbd model
-    learning_rate = 0.01
-    num_epochs = 60
-    rgbd_model = rgbd_model(rbd_model, d_model)
-    criterion = nn.MSEloss()
-    optimizer = torch.optim.SGD(rgbd_model.parameters(), lr=learning_rate)
+    data, label = get_data()
     # training
-    for epoch in range(num_epochs):
-        # forward pass
-        y = rgbd_model(x)
-        loss = criterion(y, labels)
-        # backward prop & optimize
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        if (epoch+1) % 5 == 0:
-            print ('Epoch [{}/{}], Loss: {:.4f}'.format(epoch+1, num_epochs, loss.item()))
+    print('Using {} device for training.'.format(device))
+    if finetune:
+        print('Using model[{}] for fine tunring.'.format(device))
+        model = nn.load(save_path)
+        rgbd_model = finetune(model, data)
+    else:
+        print('Using a new model for training.')
+        rgbd_model = rgbd_model(rgb_model, d_model, mode)
+        rgbd_model = train(rgbd_model, data, label)
     # save model
-    torch.save(rgbd_model, 'model.ckpt')
-    pass
+    save_path = './model/save/' + os.time + '-model.ckpt'
+    torch.save(rgbd_model.sate_dict(), save_path)
+    print('Saved model: {}'.format(save_path))
