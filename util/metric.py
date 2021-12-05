@@ -1,3 +1,5 @@
+import numpy
+
 def get_apcer():
     return 1
 
