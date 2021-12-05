@@ -1,0 +1,8 @@
+certifi==2021.10.8
+numpy==1.21.4
+Pillow==8.4.0
+torch==1.10.0+cu102
+torchaudio==0.10.0+cu102
+torchvision==0.11.1+cu102
+typing-extensions==3.10.0.2
+wincertstore==0.2
