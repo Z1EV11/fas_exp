@@ -1,11 +1,13 @@
 import torch
 from torch.utils.data import Dataset
 import numpy
+import pandas
+import yaml
 
 
 # pytorch custom dataset
 class CASIA_SURF(Dataset):
-    def __init__(self, root_dir):
+    def __init__(self, root_dir, csv_file, txt_file):
         super().__init__()
         self.root_dir = root_dir
 
@@ -16,11 +18,17 @@ class CASIA_SURF(Dataset):
         return len(self.data)
 
 
-def get_data():
-    return [1], 1
+def read_cfg(cfg_file):
+    """
+    Read configurations from yaml file
+    Args:
+        cfg_file (.yaml): path to cfg yaml
+    Returns:
+        (dict): configuration in dict
+    """
+    with open(cfg_file, 'r') as rf:
+        cfg = yaml.safe_load(rf)
+        return cfg
 
-def augument_data():
-    pass
-
-def super_resolution():
+def read_data_list(f_path):
     pass

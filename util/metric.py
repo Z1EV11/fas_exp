@@ -9,3 +9,6 @@ def get_bpcer():
 def get_acer():
     acer = (get_apcer()+get_bpcer())/2
     return acer
+
+def update_metric():
+    return 1

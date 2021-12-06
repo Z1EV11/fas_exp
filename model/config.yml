@@ -17,8 +17,10 @@ dataset:
 train:
   from: 'scratch'
   batch_size: 32
-  learning_rate: 0.0001
+  lr: 0.0001
   num_epochs: 100
   smoothing: True
-val:
+  save_path: ''
+test:
   batch_size: 24
+  save_path: ''
