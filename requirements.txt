@@ -8,3 +8,5 @@ typing-extensions==3.10.0.2
 wincertstore==0.2
 PyYAML=6.0
 pandas=1.3.4
+opencv-contrib-python=4.5.4.60
+opencv-python=4.5.4.60

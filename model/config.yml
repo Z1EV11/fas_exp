@@ -10,12 +10,15 @@ dataset:
     contrast: 0.5
     saturation: 0.5
     hue: 0.5
-  train_csv: 'tran.csv'
-  val_csv: 'val.csv'
+  train_csv: 'train_list.txt'
+  val_csv: 'val.txt'
   mean: [0.5, 0.5, 0.5]
-  sigma: [0.5, 0.5, 0.5]
+  std: [0.5, 0.5, 0.5]
 train:
   from: 'scratch'
+  rgb_size: [64,64]
+  depth_size: [64, 64]
+  output_size: 255
   batch_size: 32
   lr: 0.0001
   num_epochs: 100
