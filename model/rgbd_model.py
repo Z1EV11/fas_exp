@@ -5,11 +5,12 @@ import torch.nn as nn
 import torch.nn.functional as func
 
 
-# Central Difference Convolution
 class CD_Conv2d(nn.Module):
+    """
+    Central Difference Convolution
+    """
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1,
                  padding=1, dilation=1, groups=1, bias=False, theta=0.7):
-
         super(CD_Conv2d, self).__init__() 
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias)
         self.theta = theta
@@ -25,35 +26,6 @@ class CD_Conv2d(nn.Module):
             kernel_diff = kernel_diff[:, :, None, None]
             out_diff = func.conv2d(input=x, weight=kernel_diff, bias=self.conv.bias, stride=self.conv.stride, padding=0, groups=self.conv.groups)
             return out_normal - self.theta * out_diff
-
-# 全局平均池化层：可通过将池化窗口形状设置成输入的高和宽实现
-class Global_avg_pool2d(nn.Module):
-    def __init__(self):
-        super(Global_avg_pool2d, self).__init__()
-    def forward(self, x):
-        return func.avg_pool2d(x, kernel_size=x.size()[2:])
-
-class Flatten_layer(torch.nn.Module):
-    def __init__(self):
-        super(Flatten_layer, self).__init__()
-    def forward(self, x): # x shape: (batch, *, *, ...)
-        return x.view(x.shape[0], -1)
-
-class Dense_block(nn.Module):
-    def __init__(self, num_convs, in_channels, out_channels):
-        super(Dense_block, self).__init__()
-        net = []
-        for i in range(num_convs):
-            in_c = in_channels + i * out_channels
-            net.append(conv_block(in_c, out_channels))
-        self.net = nn.ModuleList(net)
-        self.out_channels = in_channels + num_convs * out_channels # 计算输出通道数
-
-    def forward(self, X):
-        for blk in self.net:
-            Y = blk(X)
-            X = torch.cat((X, Y), dim=1)  # 在通道维上将输入和输出连结
-        return X
 
 
 class RGBD_model(nn.Module):
@@ -108,10 +80,6 @@ class RGB_net(nn.Module):
             nn.BatchNorm2d(64), 
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
-        net.add_module("BN", nn.BatchNorm2d(num_channels))
-        net.add_module("relu", nn.ReLU())
-        net.add_module("global_avg_pool", Global_avg_pool2d()) # GlobalAvgPool2d的输出: (Batch, num_channels, 1, 1)
-        net.add_module("fc", nn.Sequential(Flatten_layer(), nn.Linear(num_channels, 10))) 
 
     def forward(self, x):
         y = self.net(x)

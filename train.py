@@ -57,13 +57,7 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=train_cfg['lr'])
     for epoch in range(train_cfg['num_epochs']):
         for i, (rgb_map, depth_map, label) in enumerate(train_loader):
-            """
-                rgb_map: tensor[32, 3, 255, 255]
-                depth_map: tensor[32, 1, 255, 255]
-                label: tensor[32, 1]
-            """
-            label = label.float()
-            label = label.reshape(32,1)
+            label = label.float().reshape(32,1)
             # forward
             p, q, r = model(rgb_map, depth_map)
             loss = criterion(p, q, r, label)
@@ -73,7 +67,7 @@ if __name__ == "__main__":
             optimizer.step() # gradient descent
             # update metrics
         if (epoch+1) % 5 == 0:
-            print ('Epoch [{}/{}], Error: {:.4f}'.format(epoch+1, num_epochs, loss.item()))
+            print ('Epoch [{}/{}], Error: {:.4f}'.format(epoch+1, train_cfg['num_epochs'], loss.item()))
     # save model
     save_path = os.path.join(os.path.abspath(__file__), 'model', 'save', '{}-model.ckpt'.format(os.time))
     torch.save(model.sate_dict(), save_path)

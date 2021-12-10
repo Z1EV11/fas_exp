@@ -13,9 +13,9 @@ class Total_loss(nn.Module):
     def forward(self, p, q, r, targets):
         """
         Args:
-            p: real probability of rgb branch
-            q: real probability of depth branch
-            r: real probability of joint branch
+            p: probability of real in rgb branch
+            q: probability of real in depth branch
+            r: probability of real in joint branch
             targets: {0:fake, 1:real}
         """
         loss_r = self.criterion_cel(r, targets)
@@ -26,6 +26,12 @@ class Total_loss(nn.Module):
 class CMFLoss(nn.Module):
 	"""
 	Cross Modal Focal Loss
+	Args:
+		alpha
+		gamma
+		binary
+		multiplier
+		sg
 	"""
 	def __init__(self, alpha=1, gamma=2, binary=False, multiplier=2, sg=False):
 		super(CMFLoss, self).__init__()

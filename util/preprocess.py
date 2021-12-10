@@ -25,9 +25,9 @@ class CASIA_SURF(Dataset):
     def __getitem__(self, index):
         """
         Returns:
-            rgb_img:
-            depth_img:
-            label:
+            rgb_map: tensor[32, 3, 255, 255]
+            depth_map: tensor[32, 1, 255, 255]
+            label: 0 or 1
         """
         rgb_path, depth_path, label = self.data.iloc[index, 0], self.data.iloc[index, 1], self.data.iloc[index, 3]
         rgb_img = cv2.imread(os.path.join(self.root_dir, rgb_path), cv2.IMREAD_COLOR)
@@ -36,10 +36,9 @@ class CASIA_SURF(Dataset):
         rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB)
         depth_img = cv2.cvtColor(depth_img, cv2.COLOR_BGR2RGB)
         # (h,w,c) => (c,h,w)
-        if self.transform:
-            rgb_img = self.transform(rgb_img)
-            depth_img = self.transform(depth_img)
-        return rgb_img, depth_img, label
+        rgb_map = self.transform(rgb_img)
+        depth_map = self.transform(depth_img)
+        return rgb_map, depth_map, label
     
     def __len__(self):
         return len(self.data)
