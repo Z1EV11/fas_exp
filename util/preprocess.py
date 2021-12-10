@@ -10,6 +10,12 @@ import cv2
 
 # pytorch custom dataset
 class CASIA_SURF(Dataset):
+    """
+    CASIA SURF dataset
+    Args:
+        root_dir: root directory of train set 
+        csv_file: file with label
+    """
     def __init__(self, root_dir, csv_file, transform=None):
         super().__init__()
         self.root_dir = root_dir
@@ -17,9 +23,15 @@ class CASIA_SURF(Dataset):
         self.transform = transform
 
     def __getitem__(self, index):
-        rgb_name, depth_name, label = self.data.iloc[index, 0], self.data.iloc[index, 1], self.data.iloc[index, 3]
-        rgb_img = cv2.imread(os.path.join(self.root_dir, rgb_name), cv2.IMREAD_COLOR)
-        depth_img = cv2.imread(os.path.join(self.root_dir, depth_name))
+        """
+        Returns:
+            rgb_img:
+            depth_img:
+            label:
+        """
+        rgb_path, depth_path, label = self.data.iloc[index, 0], self.data.iloc[index, 1], self.data.iloc[index, 3]
+        rgb_img = cv2.imread(os.path.join(self.root_dir, rgb_path), cv2.IMREAD_COLOR)
+        depth_img = cv2.imread(os.path.join(self.root_dir, depth_path))
         # gbr => rgb
         rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB)
         depth_img = cv2.cvtColor(depth_img, cv2.COLOR_BGR2RGB)

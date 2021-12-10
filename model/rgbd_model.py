@@ -5,26 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as func
 
 
-""" Common """
-# Cross Modal Focal Loss
-class CMF_Loss(nn.Module):
-    def __init__(self, alpha=1, gamma=1, lamb=0.7):
-        super(CMF_Loss, self).__init__()
-        self.alpha = alpha
-        self.gamma = gamma
-        self.lamb = lamb
-
-    def forward(self, p, q, r, label):
-        ce_loss = nn.CrossEntropyLoss()
-        total_loss = (1-self.lamb)*ce_loss(r) + self.lamb*(self.cmfl(p,q)+self.cmfl(q,p))
-        return total_loss
-
-    def w(p, q):
-        return (2*p*(q^2))/(p+q)
-
-    def cmfl(self, p, q):
-        return -self.alpha*(1-self.w(p,q))^self.gamma*math.log(p)
-
 # Central Difference Convolution
 class CD_Conv2d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1,
@@ -51,29 +31,13 @@ class Global_avg_pool2d(nn.Module):
     def __init__(self):
         super(Global_avg_pool2d, self).__init__()
     def forward(self, x):
-        return F.avg_pool2d(x, kernel_size=x.size()[2:])
+        return func.avg_pool2d(x, kernel_size=x.size()[2:])
 
 class Flatten_layer(torch.nn.Module):
     def __init__(self):
         super(Flatten_layer, self).__init__()
     def forward(self, x): # x shape: (batch, *, *, ...)
         return x.view(x.shape[0], -1)
-
-# DenseNet
-def conv_block(in_channels, out_channels):
-    blk = nn.Sequential(
-            nn.BatchNorm2d(in_channels), 
-            nn.ReLU(),
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1))
-    return blk
-
-def transition_block(in_channels, out_channels):
-    blk = nn.Sequential(
-            nn.BatchNorm2d(in_channels), 
-            nn.ReLU(),
-            nn.Conv2d(in_channels, out_channels, kernel_size=1),
-            nn.AvgPool2d(kernel_size=2, stride=2))
-    return blk
 
 class Dense_block(nn.Module):
     def __init__(self, num_convs, in_channels, out_channels):
@@ -92,22 +56,50 @@ class Dense_block(nn.Module):
         return X
 
 
-""" Model """
-# RGB-D PAD
 class RGBD_model(nn.Module):
+    """
+    RGB-D Multi-Modal PAD Framework
+    Args:
+        rgb_net
+        depth_net
+    """
     def __init__(self, rgb_net, depth_net):
         super(RGBD_model, self).__init__()
         self.rgb_net = rgb_net()
         self.depth_net = depth_net()
+        self.gavg_pool=nn.AdaptiveAvgPool2d(1)
+        self.fc_lalyer_p = nn.Linear(1000, 1)
+        self.fc_lalyer_r = nn.Linear(2000, 1)
 
     def forward(self, rgb_map, depth_map):
-        p = self.rgb_net(rgb_map)
-        q = self.depth_net(depth_map)
-        r = 1
+        """"
+        Returns:
+            p
+            q
+            r
+        """
+        y_rgb = self.rgb_net(rgb_map)
+        y_d = self.depth_net(depth_map)
+
+        gap_rgb = self.gavg_pool(y_rgb).squeeze()
+        gap_d = self.gavg_pool(y_d).squeeze() 
+
+        gap_rgb = nn.Sigmoid()(y_rgb) 
+        gap_d = nn.Sigmoid()(y_d) 
+
+        op_rgb=self.fc_lalyer_p(gap_rgb)
+        op_d=self.fc_lalyer_p(gap_d)
+
+        p = nn.Sigmoid()(op_rgb)
+        q = nn.Sigmoid()(op_d)
+
+        gap=torch.cat([gap_rgb,gap_d], dim=1)
+        op = self.fc_lalyer_r(gap)
+        r = nn.Sigmoid()(op)
+
         return p, q, r
 
 
-# DenseNet
 class RGB_net(nn.Module):
     def __init__(self):
         super(RGB_net, self).__init__()
@@ -126,7 +118,6 @@ class RGB_net(nn.Module):
         return y
 
 
-# DenseNet
 class Depth_net(nn.Module):
     def __init__(self):
         super(Depth_net, self).__init__()

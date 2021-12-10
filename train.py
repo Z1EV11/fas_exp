@@ -5,10 +5,11 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 import numpy as np
-from torchvision.models import resnet18
 
-from model.rgbd_model import RGBD_model, RGB_net, Depth_net, CMF_Loss
+from model.rgbd_model import RGBD_model, RGB_net, Depth_net
 from util.preprocess import CASIA_SURF, read_cfg
+from util.loss import Total_loss
+from model.res_net import resnet18
 
 
 cfg = read_cfg(cfg_file="./model/config.yml")
@@ -40,7 +41,7 @@ if __name__ == "__main__":
         transforms.Normalize(data_cfg['mean'], data_cfg['std']),
     ])
     train_set = CASIA_SURF(
-        root_dir='{}/dataset/{}/train/'.format(os.path.dirname(os.path.abspath(__file__)), data_cfg['name']),
+        root_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset', data_cfg['name'], 'train'),
         csv_file=data_cfg['train_csv'],
         transform=train_transform,
         # smoothing=True
@@ -52,11 +53,17 @@ if __name__ == "__main__":
     # training
     print('Using {} device for training.'.format(device))
     model = create_model(cfg)
-    criterion = CMF_Loss()
+    criterion = Total_loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=train_cfg['lr'])
     for epoch in range(train_cfg['num_epochs']):
         for i, (rgb_map, depth_map, label) in enumerate(train_loader):
-            print(rgb_map.shape)
+            """
+                rgb_map: tensor[32, 3, 255, 255]
+                depth_map: tensor[32, 1, 255, 255]
+                label: tensor[32, 1]
+            """
+            label = label.float()
+            label = label.reshape(32,1)
             # forward
             p, q, r = model(rgb_map, depth_map)
             loss = criterion(p, q, r, label)
@@ -68,6 +75,6 @@ if __name__ == "__main__":
         if (epoch+1) % 5 == 0:
             print ('Epoch [{}/{}], Error: {:.4f}'.format(epoch+1, num_epochs, loss.item()))
     # save model
-    save_path = './model/save/' + os.time + '-model.ckpt'
+    save_path = os.path.join(os.path.abspath(__file__), 'model', 'save', '{}-model.ckpt'.format(os.time))
     torch.save(model.sate_dict(), save_path)
     print('Saved model: {}'.format(save_path))
