@@ -46,9 +46,9 @@ class RGBD_model(nn.Module):
     def forward(self, rgb_map, depth_map):
         """"
         Returns:
-            p
-            q
-            r
+            p: probability of real in rgb branch
+            q: probability of real in depth branch
+            r: probability of real in joint branch
         """
         y_rgb = self.rgb_net(rgb_map)
         y_d = self.depth_net(depth_map)

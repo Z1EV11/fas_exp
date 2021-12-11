@@ -12,10 +12,11 @@ from util.loss import Total_loss
 from model.res_net import resnet18
 
 
-cfg = read_cfg(cfg_file="./model/config.yml")
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+cfg = read_cfg(cfg_file="./model/config.yml")
 data_cfg = cfg['dataset']
 train_cfg = cfg['train']
+root_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def create_model(cfg):
@@ -41,7 +42,7 @@ if __name__ == "__main__":
         transforms.Normalize(data_cfg['mean'], data_cfg['std']),
     ])
     train_set = CASIA_SURF(
-        root_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset', data_cfg['name'], 'train'),
+        root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'train'),
         csv_file=data_cfg['train_csv'],
         transform=train_transform,
         # smoothing=True
@@ -57,7 +58,8 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=train_cfg['lr'])
     for epoch in range(train_cfg['num_epochs']):
         for i, (rgb_map, depth_map, label) in enumerate(train_loader):
-            label = label.float().reshape(32,1)
+            rgb_map, depth_map = rgb_map.to(device), depth_map.to(device)
+            label = label.float().reshape(32,1).to(device)
             # forward
             p, q, r = model(rgb_map, depth_map)
             loss = criterion(p, q, r, label)
@@ -69,6 +71,6 @@ if __name__ == "__main__":
         if (epoch+1) % 5 == 0:
             print ('Epoch [{}/{}], Error: {:.4f}'.format(epoch+1, train_cfg['num_epochs'], loss.item()))
     # save model
-    save_path = os.path.join(os.path.abspath(__file__), 'model', 'save', '{}-model.ckpt'.format(os.time))
+    save_path = os.path.join(root_dir, 'model', 'save', '{}-model.ckpt'.format(os.time))
     torch.save(model.sate_dict(), save_path)
     print('Saved model: {}'.format(save_path))

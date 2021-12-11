@@ -23,7 +23,8 @@ train:
   lr: 0.0001
   num_epochs: 100
   smoothing: True
-  save_path: ''
 test:
-  batch_size: 24
-  save_path: ''
+  model: ''
+  rgb_size: [224,224]
+  depth_size: [64, 64]
+  batch_size: 32

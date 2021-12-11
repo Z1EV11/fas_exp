@@ -23,15 +23,38 @@ class Total_loss(nn.Module):
         loss = (1-self.lamb)*loss_r + self.lamb*loss_pq
         return loss
 
-class CMFLoss(nn.Module):
+class CMF_loss():
 	"""
 	Cross Modal Focal Loss
 	Args:
-		alpha
-		gamma
-		binary
-		multiplier
-		sg
+		alpha: alpha balanced
+		gamma: modulating factor
+		multiplier: num of branches
+	"""
+	def __init__(self, alpha=1, gamma=2, multiplier=2):
+		super(CMF_loss, self).__init__()
+		self.alpha = alpha
+		self.gamma = gamma
+		self.multiplier =multiplier
+	
+	def forward(self, p, q, targets):
+		bce_loss_p = func.binary_cross_entropy(p, targets, reduce=False)
+		bce_loss_q = func.binary_cross_entropy(q, targets, reduce=False)
+
+		pt = torch.exp(-bce_loss_p)
+		qt = torch.exp(-bce_loss_q)
+
+		cmfl = self.alpha * (1-self.w(pt, qt))**self.gamma * bce_loss_p
+		return cmfl
+
+	def w(self, pt, qt):
+		eps = 0.000000001
+		w = ((qt + eps)*(self.multiplier*pt*qt))/(pt + qt + eps)
+		return w
+
+class CMFLoss(nn.Module):
+	"""
+	Cross Modal Focal Loss
 	"""
 	def __init__(self, alpha=1, gamma=2, binary=False, multiplier=2, sg=False):
 		super(CMFLoss, self).__init__()

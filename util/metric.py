@@ -1,4 +1,4 @@
-import numpy
+import torch
 
 def get_apcer():
     return 1
