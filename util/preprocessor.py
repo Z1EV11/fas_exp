@@ -27,7 +27,7 @@ class CASIA_SURF(Dataset):
         Returns:
             rgb_map: tensor[32, 3, 255, 255]
             depth_map: tensor[32, 1, 255, 255]
-            label: 0 or 1
+            label: {0:fake, 1:real}
         """
         rgb_path, depth_path, label = self.data.iloc[index, 0], self.data.iloc[index, 1], self.data.iloc[index, 3]
         rgb_img = cv2.imread(os.path.join(self.root_dir, rgb_path), cv2.IMREAD_COLOR)
