@@ -1,46 +1,50 @@
 import numpy as np
 import torch
 
-def get_acc(pred, label):
-    """
-    Accuracy
-    Args:
-        perd: tensor.
-        label: tensor.
-    """
-    err_rate = torch.mean(torch.sum(torch.abs(label-pred)) / len(label))
-    acc = 1-err_rate
-    return acc
+class Metric():
+    def __init__(self, acc=0.0, acer=0.0):
+        """
+        Args:
+            acc: Accuracy
+            acer: Average Classification Error Rate
+        """
+        self.acc = acc
+        self.acer = acer
 
-def get_precision():
-    pass
+    def calc_acc(self, pred, label):
+        """
+        Accuracy
+        Args:
+            perd: tensor.
+            label: tensor.
+        """
+        err = torch.mean(torch.sum(torch.abs(label-pred)) / len(label))
+        acc = 1 - err
+        return acc
 
-def get_recall():
-    pass
+    def calc_precision(self):
+        pass
 
-def get_F1_socre():
-    pass
+    def calc_recall(self):
+        pass
 
-def get_apcer():
-    """
-    Attack Presentation Classification Error Rate
-    """
-    return 1
+    def clac_F1_socre(self):
+        pass
 
-def get_bpcer():
-    """
-    Bonafide Presentation Classification Error Rate
-    """
-    return 1
+    def calc_acer(self, pred, label):
+        """
+        Average Classification Error Rate
+        Returns:
+            ACER: (APCER+BPCER)/2
+            APCER: Attack Presentation Classification Error Rate
+            BPCER: Bonafide Presentation Classification Error Rate
+        """
+        apcer = 1
+        bpcer = 1
+        acer = (apcer+bpcer)/2
+        return acer, apcer, bpcer
 
-def get_acer():
-    """
-    Average Classification Error Rate
-    """
-    apcer = get_apcer()
-    bpcer = get_bpcer()
-    acer = (apcer+bpcer)/2
-    return acer
-
-def update_metric():
-    return 1
+    def update(self, pred, label):
+        acc = self.clac_acc(pred, label)
+        self.acc = self.acc + torch.mean(acc)
+        pass

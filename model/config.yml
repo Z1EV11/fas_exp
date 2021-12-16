@@ -11,24 +11,24 @@ dataset:
     saturation: 0.5
     hue: 0.5
   train_csv: 'train_list.txt'
-  val_csv: 'val.txt'
+  val_csv: 'val_private_list.txt'
   test_csv: 'test_private_list.txt'
   mean: [0.5, 0.5, 0.5]
   std: [0.5, 0.5, 0.5]
 train:
   from: 'scratch'
-  net: 'densenet161-densenet161'
+  net: 'resnet18-resnet18'
   rgb_size: [224,224]
   depth_size: [64, 64]
   output_size: 255
   batch_size: 32
-  lr: 1e-5
+  lr: 1e-4
   w_decay: 1e-5
   eps: 1e-8
   num_epochs: 30
   smoothing: True
 test:
-  model: '2021-12-14 14_00_24-densenet161-densenet161.pth'
+  model: '2021-12-16 14_24_25-resnet18-resnet18.pth'
   rgb_size: [224,224]
   depth_size: [64, 64]
   batch_size: 32
