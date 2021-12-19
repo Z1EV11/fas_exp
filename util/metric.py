@@ -5,11 +5,15 @@ class Metric():
     def __init__(self, acc=0.0, acer=0.0):
         """
         Args:
-            acc: Accuracy
+            avg_acc: Average Accuracy
             acer: Average Classification Error Rate
+            sum: Error Sum
+            count: Count of Batchs
         """
-        self.acc = acc
-        self.acer = acer
+        self.count = 0
+        self.acc_sum = 0
+        self.avg_acc = 0
+        self.acer = 0
 
     def calc_acc(self, pred, label):
         """
@@ -41,10 +45,25 @@ class Metric():
         """
         apcer = 1
         bpcer = 1
-        acer = (apcer+bpcer)/2
+        # acer = (apcer+bpcer)/2
+        acer = self.sum/self.count
         return acer, apcer, bpcer
 
     def update(self, pred, label):
-        acc = self.clac_acc(pred, label)
-        self.acc = self.acc + torch.mean(acc)
-        pass
+        acc = self.calc_acc(pred, label)
+        self.acc_sum = self.acc_sum + acc
+        self.count += 1
+
+    def get_avg_acc(self):
+        avg_acc = self.acc_sum/self.count
+        return avg_acc
+
+def calc_score(output, threshould=0.5):
+    """
+    Convert output estimation to spoof/live prediction
+    """
+    r = output[1].cpu()
+    with torch.no_grad():
+        output_binary_1 = r.data.numpy().flatten()
+        score= np.mean(output_binary_1)
+    return score

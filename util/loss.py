@@ -1,49 +1,52 @@
 import torch
+from torch._C import device
 import torch.nn as nn
 import torch.nn.functional as func
 
 
 class Total_loss(nn.Module):
-    def __init__(self, device, lamb=0.5):
-        super(Total_loss, self).__init__()
-        self.lamb = lamb
-        self.bcel = nn.BCELoss().to(device)
-        self.cmfl = CMF_loss().to(device)
-    
-    def forward(self, p, q, r, targets):
-        """
-        Args:
-            p: prob of live in rgb branch
-            q: prob of live in depth branch
-            r: prob of live in joint branch
-            targets: {0:fake, 1:live}
-        """
-        bcel_r = self.bcel(r, targets) # CE(rt) = BCE(r)
-        cmfl_pq = self.cmfl(p,q,targets)	# CMFL(pt,qt)+CMFL(qt,pt)
-        error = (1-self.lamb)*bcel_r + self.lamb*cmfl_pq
-        return error
+	def __init__(self, device, lamb=0.5, alpha=1, gamma=3):
+		super(Total_loss, self).__init__()
+		self.lamb = lamb
+		self.bcel = nn.BCELoss()
+		self.cmfl = CMFLoss(alpha, gamma)
 
-class CMF_loss(nn.Module):
+	def forward(self, p, q, r, targets):
+		"""
+		Args:
+		p: prob of live in rgb branch	[B,1]
+		q: prob of live in depth branch	[B,1]
+		r: prob of live in joint branch	[B,1]
+		targets: {0:fake, 1:live}
+		"""
+		bcel_r = self.bcel(r, targets) 		# CE(rt) = BCE(r)
+		# print('[Loss-BCE]\tbcel_r: {}'.format(bcel_r.item()))
+		cmfl_pq = self.cmfl(p,q,targets)	# CMFL(pt,qt)+CMFL(qt,pt)
+		# print('[Loss-CMFL]\tcmfl_pq: {}'.format(cmfl_pq.item()))
+		error = (1-self.lamb)*bcel_r + self.lamb*cmfl_pq
+		return error
+
+class CMFLoss(nn.Module):
 	"""
 	Cross Modal Focal Loss
 	"""
-	def __init__(self, alpha=0.75, gamma=3):
+	def __init__(self, alpha, gamma):
 		"""
 		Args:
 			alpha: alpha balanced
 			gamma: tunnable focusing parameter. modulating factor is (1-pt)**gamma = (1-w(pt,qt)**gamma)
 			multiplier: num of branches
 		"""
-		super(CMF_loss, self).__init__()
+		super(CMFLoss, self).__init__()
 		self.alpha = alpha
 		self.gamma = gamma
 	
 	def forward(self, p, q, targets):
 		""""
         Args:
-            p: prob of live in rgb branch
-            q: prob of live in depth branch
-            r: prob of live in joint branch
+            p: prob of live in rgb branch. 		[B,1]
+            q: prob of live in depth branch. 	[B,1]
+            r: prob of live in joint branch. 	[B,1]
         """
 		bce_loss_p = func.binary_cross_entropy(p, targets, reduce=False) # CE(pt) = BCE(p)
 		bce_loss_q = func.binary_cross_entropy(q, targets, reduce=False)

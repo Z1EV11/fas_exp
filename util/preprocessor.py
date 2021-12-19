@@ -15,6 +15,7 @@ class CASIA_SURF(Dataset):
     Args:
         root_dir: root directory of train set 
         csv_file: file with label
+        transform: [transf_rgb, transf_d]
     """
     def __init__(self, root_dir, csv_file, transform=None):
         super().__init__()
@@ -35,9 +36,9 @@ class CASIA_SURF(Dataset):
         # gbr => rgb
         rgb_img = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2RGB)
         depth_img = cv2.cvtColor(depth_img, cv2.COLOR_BGR2RGB)
-        # (h,w,c) => (c,h,w)
-        rgb_map = self.transform(rgb_img)
-        depth_map = self.transform(depth_img)
+        # [W,W,C] -> [C,W,W]
+        rgb_map = self.transform[0](rgb_img)
+        depth_map = self.transform[1](depth_img)
         return rgb_map, depth_map, label
     
     def __len__(self):

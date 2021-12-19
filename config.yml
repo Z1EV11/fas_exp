@@ -18,17 +18,17 @@ dataset:
 train:
   from: 'scratch'
   net: 'resnet18-resnet18'
-  rgb_size: [224,224]
+  rgb_size: [128,128]
   depth_size: [64, 64]
-  output_size: 255
-  batch_size: 32
-  lr: 1e-4
-  w_decay: 1e-5
-  eps: 1e-8
+  batch_size: 64
+  lr: 0.0001
+  w_decay: 0.000001
+  eps: 0.00000001
   num_epochs: 30
-  smoothing: True
+  cmfl_lamb: 0.5
+  cmfl_alpha: 1
+  cmfl_gamma: 2
 test:
-  model: '2021-12-16 14_24_25-resnet18-resnet18.pth'
+  model: '2021-12-18 11_22_46-resnet18-resnet18.pth'
   rgb_size: [224,224]
-  depth_size: [64, 64]
   batch_size: 32

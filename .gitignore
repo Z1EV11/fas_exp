@@ -1,4 +1,6 @@
 /dataset/
 /model/save/
 /exp/
+/.idea/
+*/__pycache__/
 a.py
