@@ -36,14 +36,15 @@ if __name__ == '__main__':\
         transforms.Normalize(data_cfg['mean'], data_cfg['std']),
     ])
     test_set = CASIA_SURF(
-        root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'test'),
-        csv_file=data_cfg['test_csv'],
+        root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'val'),
+        csv_file=data_cfg['val_csv'],
         transform=[train_transform, train_transform],
         # smoothing=True
     )
     test_loader = DataLoader(
         dataset=test_set,
         batch_size=test_cfg['batch_size'],
+        num_workers=2
     )
     # testing
     model = torch.load(save_path).to(device)

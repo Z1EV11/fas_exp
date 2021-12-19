@@ -29,6 +29,6 @@ train:
   cmfl_alpha: 1
   cmfl_gamma: 2
 test:
-  model: '2021-12-18 11_22_46-resnet18-resnet18.pth'
+  model: '2021-12-19 14_19_00-densenet121-densenet121.pth'
   rgb_size: [224,224]
-  batch_size: 32
+  batch_size: 16
