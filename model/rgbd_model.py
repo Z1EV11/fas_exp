@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as func
 
-from .dense_net import RGB_net, Depth_net
+from .squeeze_net import RGB_net, Depth_net
 
 
 class CD_Conv2d(nn.Module):
@@ -44,7 +44,7 @@ class RGBD_model(nn.Module):
         self.depth_net = Depth_net().to(device)
         self.classifier = nn.Sequential(
             # nn.Sigmoid(),
-            nn.Linear(512,1), # diy by backbone
+            nn.Linear(1024,1), # diy by backbone
             nn.Sigmoid()
         )
 

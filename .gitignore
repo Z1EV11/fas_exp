@@ -1,6 +1,7 @@
 /dataset/
 /model/save/
 /exp/
+/runs/
 /.idea/
 /*/__pycache__/
 */__pycache__/

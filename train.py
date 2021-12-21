@@ -77,10 +77,10 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=train_cfg['lr'], weight_decay=train_cfg['w_decay'])
     metric = Metric()
     for epoch in range(train_cfg['num_epochs']):
-        # if epoch>=1: break
+        if epoch>=1: break
         # print("--------------------------------------------------------------------------------------")
         for i, (rgb_map, depth_map, label) in enumerate(train_loader):
-            # if i>=5: break
+            if i>=1: break
             # print("--------------------------------------------------------------------------------------")
             rgb_map, depth_map = rgb_map.to(device), depth_map.to(device) # [B,3,224,224]
             output = model(rgb_map, depth_map) # (gap, r, p, q)
@@ -100,9 +100,9 @@ if __name__ == "__main__":
             # metric.update(pred, label)
             # print ('Batch [{}], Error: {:.4f}, ACC: {:.4f}, Score: {:.4f}'.format(i+1, error.item(), metric.calc_acc(pred,label), score))
         print('Epoch [{}/{}], Error: {:.7f}'.format(epoch+1, train_cfg['num_epochs'], error.item()))
-        # break
+        break
     # save model
-    save_time = time.strftime("%Y-%m-%d %H_%M_%S", time.localtime()) 
-    save_path = os.path.join(root_dir, 'model', 'save', '{}-{}.pth'.format(save_time, train_cfg['net']))
-    torch.save(model, save_path) # torch.save(model.state_dict(), save_path)
-    print('Saved model: {}'.format(save_path))
+    # save_time = time.strftime("%Y-%m-%d %H_%M_%S", time.localtime()) 
+    # save_path = os.path.join(root_dir, 'model', 'save', '{}-{}.pth'.format(save_time, train_cfg['net']))
+    # torch.save(model, save_path) # torch.save(model.state_dict(), save_path)
+    # print('Saved model: {}'.format(save_path))

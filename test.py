@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
+from torch.utils.tensorboard import SummaryWriter
 
 from util.preprocessor import CASIA_SURF, read_cfg
 from util.loss import Total_loss
@@ -44,11 +45,12 @@ if __name__ == '__main__':\
     test_loader = DataLoader(
         dataset=test_set,
         batch_size=test_cfg['batch_size'],
+        shuffle=True,
         num_workers=2
     )
     # testing
     model = torch.load(save_path).to(device)
-    metric = Metric()
+    # writer = SummaryWriter(cfg['log_dir'])
     for i, (rgb_map, depth_map, label) in enumerate(test_loader):
         rgb_map, depth_map = rgb_map.to(device), depth_map.to(device) # [B,3,H,W]
         label = label.float().reshape(len(label),1).to(device) # [B,1]
@@ -62,4 +64,4 @@ if __name__ == '__main__':\
         print('label:\t',label.squeeze())
         metric.update(pred, label)
         print ('Batch: {}\t ACC: {:.4f}\t ACER: {:.4f}'.format(i, metric.calc_acc(pred,label), NaN))
-    # visualization
+    # writer.close()
