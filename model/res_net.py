@@ -66,3 +66,4 @@ class Depth_net(nn.Module):
         #print('[D-backbone]\ty_d: {}\tgap_d: {}'.format(y.size(), gap.size()))
         q = self.classifier(gap)
         return gap, q
+

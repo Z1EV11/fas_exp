@@ -3,7 +3,9 @@ import torch
 
 
 class AvgMeter(object):
-    """Computes and stores the average and current value"""
+    """
+        Computes and stores the average and current value
+    """
     def __init__(self):
         self.reset()
 
@@ -19,19 +21,11 @@ class AvgMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
-class Metric():
-    def __init__(self, acc=0.0, acer=0.0):
-        """
-        Args:
-            avg_acc: Average Accuracy
-            acer: Average Classification Error Rate
-            sum: Error Sum
-            count: Count of Batchs
-        """
-        self.count = 0
-        self.acc_sum = 0
-        self.avg_acc = 0
-        self.acer = 0
+
+class Accuracy(AvgMeter):
+    def __init__(self):
+        super(AvgMeter, self).__init__()
+        self.reset()
 
     def calc_acc(self, pred, label):
         """
@@ -53,6 +47,16 @@ class Metric():
     def clac_F1_socre(self):
         pass
 
+
+class FAS_metric(AvgMeter):
+    def __init__(self, num_pa):
+        """
+        Args:
+            num_pa: number of Presentation Attack types
+        """
+        super(AvgMeter, self).__init__()
+        self.num_pa = num_pa
+        self.reset()
     def calc_acer(self, pred, label):
         """
         Average Classification Error Rate
@@ -63,25 +67,5 @@ class Metric():
         """
         apcer = 1
         bpcer = 1
-        # acer = (apcer+bpcer)/2
-        acer = self.sum/self.count
+        acer = (apcer+bpcer)/2
         return acer, apcer, bpcer
-
-    def update(self, pred, label):
-        acc = self.calc_acc(pred, label)
-        self.acc_sum = self.acc_sum + acc
-        self.count += 1
-
-    def get_avg_acc(self):
-        avg_acc = self.acc_sum/self.count
-        return avg_acc
-
-def calc_score(output, threshould=0.5):
-    """
-    Convert output estimation to spoof/live prediction
-    """
-    r = output[1].cpu()
-    with torch.no_grad():
-        output_binary_1 = r.data.numpy().flatten()
-        score= np.mean(output_binary_1)
-    return score

@@ -17,7 +17,7 @@ dataset:
   std: [0.5, 0.5, 0.5]
 train:
   from: 'scratch'
-  net: 'resnet34-resnet34'
+  net: 'resnet34-cdc-nam'
   rgb_size: [224,224]
   depth_size: [64, 64]
   batch_size: 64
