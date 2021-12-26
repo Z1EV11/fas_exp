@@ -10,8 +10,7 @@ from torchvision import transforms
 # from torch.utils.tensorboard import SummaryWriter
 
 from util.preprocessor import CASIA_SURF, read_cfg
-from util.loss import Total_loss
-from util.metric import AvgMeter, Metric
+from util.metric import Accuracy
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -41,7 +40,7 @@ if __name__ == '__main__':\
         dataset=test_set,
         batch_size=test_cfg['batch_size'],
         shuffle=True,
-        num_workers=2
+        num_workers=4
     )
     # testing
     model = torch.load(save_path).to(device)
@@ -60,5 +59,5 @@ if __name__ == '__main__':\
         acc_val = acc.calc_acc(pred, label)
         acc.update(acc_val)
         print ('Batch: {}\t ACC: {:.4f}\t ACER: {:.4f}'.format(i, acc_val, NaN))
-    print('AVG_ACC: {:.4f}'.format(acc.avg))
+    print('AVG_ACC: {:.4f}'.format(acc.get_avg_acc()))
     # writer.close()

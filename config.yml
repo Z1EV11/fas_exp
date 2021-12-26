@@ -17,18 +17,18 @@ dataset:
   std: [0.5, 0.5, 0.5]
 train:
   from: 'scratch'
-  net: 'resnet34-cdc-nam'
+  net: 'resnet18_cdc'
   rgb_size: [224,224]
   depth_size: [64, 64]
   batch_size: 64
   lr: 0.0001
   w_decay: 0.000001
   eps: 0.00000001
-  num_epochs: 30
+  num_epochs: 40
   cmfl_lamb: 0.5
   cmfl_alpha: 1
-  cmfl_gamma: 2
+  cmfl_gamma: 3
 test:
-  model: '2021-12-19 14_19_00-densenet121-densenet121.pth'
+  model: '2021-12-19 14-19-00_densenet121.pth'
   rgb_size: [224,224]
   batch_size: 16

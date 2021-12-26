@@ -1,5 +1,8 @@
+import math
+
 import torch
 import torch.nn as nn
+import torch.nn.functional as func
 
 
 class CD_Conv2d(nn.Module):
@@ -7,7 +10,10 @@ class CD_Conv2d(nn.Module):
     Central Difference Convolution
     """
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1,
-                 padding=1, dilation=1, groups=1, bias=False, theta=0.7):
+                 padding=1, dilation=1, groups=1, bias=False, theta=0.5):
+        """
+        theta: θ*CDC(x) + (1-θ)*Conv(x)
+        """
         super(CD_Conv2d, self).__init__() 
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias)
         self.theta = theta

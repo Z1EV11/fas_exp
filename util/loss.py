@@ -1,5 +1,4 @@
 import torch
-from torch._C import device
 import torch.nn as nn
 import torch.nn.functional as func
 
@@ -14,10 +13,10 @@ class Total_loss(nn.Module):
 	def forward(self, p, q, r, targets):
 		"""
 		Args:
-		p: prob of live in rgb branch	[B,1]
-		q: prob of live in depth branch	[B,1]
-		r: prob of live in joint branch	[B,1]
-		targets: {0:fake, 1:live}
+			p: prob of live in rgb branch	[B,1]
+			q: prob of live in depth branch	[B,1]
+			r: prob of live in joint branch	[B,1]
+			targets: {0:fake, 1:live}
 		"""
 		bcel_r = self.bcel(r, targets) 		# CE(rt) = BCE(r)
 		# print('[Loss-BCE]\tbcel_r: {}'.format(bcel_r.item()))

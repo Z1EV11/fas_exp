@@ -5,6 +5,7 @@ import warnings
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import MultiStepLR
 from torchvision import transforms
 import numpy as np
 
@@ -36,6 +37,11 @@ def create_model(cfg):
         print("Missing Training's Type!!!")
         raise NotImplementedError
 
+def validate():
+    pass
+
+def train():
+    pass
 
 if __name__ == "__main__":
     # preprocessing
@@ -66,7 +72,9 @@ if __name__ == "__main__":
     train_loader = DataLoader(
         dataset=train_set,
         batch_size=train_cfg['batch_size'],
-        shuffle=True
+        shuffle=True,
+        num_workers=4,
+        pin_memory=True
     )
     # training
     print('Using {} device for training.'.format(device))
@@ -75,12 +83,13 @@ if __name__ == "__main__":
         param.requires_grad = True
     loss = Total_loss(device, lamb=train_cfg['cmfl_lamb'], alpha=train_cfg['cmfl_alpha'], gamma=train_cfg['cmfl_gamma']).to(device)
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=train_cfg['lr'], weight_decay=train_cfg['w_decay'])
-    acc = Accuracy()
+    scheduler = MultiStepLR(optimizer, milestones=[20,30], gamma=0.1)
+    # acc = Accuracy()
     for epoch in range(train_cfg['num_epochs']):
-        if epoch>=1: break
+        # if epoch>=1: break
         # print("--------------------------------------------------------------------------------------")
         for i, (rgb_map, depth_map, label) in enumerate(train_loader):
-            if i>=1: break
+            # if i>=1: break
             # print("--------------------------------------------------------------------------------------")
             rgb_map, depth_map = rgb_map.to(device), depth_map.to(device) # [B,3,224,224]
             output = model(rgb_map, depth_map) # (gap, r, p, q)
@@ -90,19 +99,19 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             error.backward()
             optimizer.step() # gradient descent
-            # score = calc_score(output)
-            # pred = torch.where(output[1]>0.5, 1., 0.)
+            pred = torch.where(output[1]>0.5, 1., 0.)
             # print('p:\t',output[2].squeeze(1))
             # print('q:\t',output[3].squeeze(1))
             # print('r:\t',output[1].squeeze(1))
             # print('pred:\t',pred.squeeze(1))
             # print('label:\t',label.squeeze(1))
-            acc.update(pred, label)
-            print ('Batch [{}], Error: {:.4f}, ACC: {:.4f}, Score: {:.4f}'.format(i+1, error.item(), acc.calc_acc(pred,label), score))
-        # print('Epoch [{}/{}], Error: {:.7f}'.format(epoch+1, train_cfg['num_epochs'], error.item()))
-        break
+            # acc.update(pred, label)
+            # print ('Batch [{}], Error: {:.4f}, ACC: {:.4f}'.format(i+1, error.item(), acc.calc_acc(pred,label)))
+        scheduler.step() # change lr
+        print('Epoch [{}/{}], Error: {:.7f}, lr: {:.7f}'.format(epoch+1, train_cfg['num_epochs'], error.item(), optimizer.param_groups[0]['lr']))
+        # break
     # save model
-    # save_time = time.strftime("%Y-%m-%d %H_%M_%S", time.localtime()) 
-    # save_path = os.path.join(root_dir, 'model', 'save', '{}-{}.pth'.format(save_time, train_cfg['net']))
-    # torch.save(model, save_path) # torch.save(model.state_dict(), save_path)
-    # print('Saved model: {}'.format(save_path))
+    save_time = time.strftime("%Y-%m-%d %H-%M-%S", time.localtime()) 
+    save_path = os.path.join(root_dir, 'model', 'save', '{}-{}.pth'.format(save_time, train_cfg['net']))
+    torch.save(model, save_path) # torch.save(model.state_dict(), save_path)
+    print('Saved model: {}'.format(save_path))
