@@ -1,16 +1,15 @@
-from math import nan
+import math
 import os
-from tarfile import NUL
-from numpy import NaN
 
 import torch
 import torch.nn as nn
+from torch.nn.functional import leaky_relu
 from torch.utils.data import DataLoader
 from torchvision import transforms
 # from torch.utils.tensorboard import SummaryWriter
 
 from util.preprocessor import CASIA_SURF, read_cfg
-from util.metric import Accuracy
+from util.metric import Binary_Class
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -19,6 +18,17 @@ data_cfg = cfg['dataset']
 test_cfg = cfg['test']
 root_dir = os.path.dirname(os.path.abspath(__file__))
 save_path = os.path.join(root_dir, 'model', 'save', test_cfg['model'])
+
+
+def calc_acc(pred, label):
+    """
+    Args:
+        perd: tensor.
+        label: tensor.
+    """
+    err = torch.mean(torch.sum(torch.abs(label-pred)) / len(label))
+    acc = 1 - err
+    return acc
 
 
 if __name__ == '__main__':\
@@ -44,20 +54,19 @@ if __name__ == '__main__':\
     )
     # testing
     model = torch.load(save_path).to(device)
-    acc = Accuracy()
+    metric = Binary_Class()
     # writer = SummaryWriter(cfg['log_dir'])
     for i, (rgb_map, depth_map, label) in enumerate(test_loader):
         rgb_map, depth_map = rgb_map.to(device), depth_map.to(device) # [B,3,H,W]
         label = label.float().reshape(len(label),1).to(device) # [B,1]
         output = model(rgb_map, depth_map) # (gap, r, p, q)
-        score = output[1]
-        pred = torch.where(score>0.5, 1., 0.)
+        pred = torch.where(output[1]>0.5, 1., 0.)
         print("--------------------------------------------------------------------------------------")
         print('r:\t',output[1].squeeze())
         print('pred:\t',pred.squeeze())
         print('label:\t',label.squeeze())
-        acc_val = acc.calc_acc(pred, label)
-        acc.update(acc_val)
-        print ('Batch: {}\t ACC: {:.4f}\t ACER: {:.4f}'.format(i, acc_val, NaN))
-    print('AVG_ACC: {:.4f}'.format(acc.get_avg_acc()))
+        metric.update(pred, label)
+        local_acc = calc_acc(pred, label)
+        print ('Batch: {}\t ACC: {:.4f}\t'.format(i, local_acc))
+    print('ACC: {:.4f}'.format(metric.calc_ACC()))
     # writer.close()

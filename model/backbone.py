@@ -1,12 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as func
-import torchvision
 import numpy as np
 
 from .ResNet import resnet18
 from .conv import CD_Conv2d
-from .attention import NAM
 
 
 class RGB_net(nn.Module):

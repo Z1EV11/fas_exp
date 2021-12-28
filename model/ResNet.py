@@ -1,23 +1,10 @@
 import torch
 from torch import Tensor
 import torch.nn as nn
-from torchvision._internally_replaced_utils import load_state_dict_from_url
 from typing import Type, Any, Callable, Union, List, Optional
 
 from .conv import CD_Conv2d
-
-
-model_urls = {
-    'resnet18': 'https://download.pytorch.org/models/resnet18-f37072fd.pth',
-    'resnet34': 'https://download.pytorch.org/models/resnet34-b627a593.pth',
-    'resnet50': 'https://download.pytorch.org/models/resnet50-0676ba61.pth',
-    'resnet101': 'https://download.pytorch.org/models/resnet101-63fe2227.pth',
-    'resnet152': 'https://download.pytorch.org/models/resnet152-394f9c45.pth',
-    'resnext50_32x4d': 'https://download.pytorch.org/models/resnext50_32x4d-7cdf4587.pth',
-    'resnext101_32x8d': 'https://download.pytorch.org/models/resnext101_32x8d-8ba56ff5.pth',
-    'wide_resnet50_2': 'https://download.pytorch.org/models/wide_resnet50_2-95faca4d.pth',
-    'wide_resnet101_2': 'https://download.pytorch.org/models/wide_resnet101_2-32ee1156.pth',
-}
+from .attention import Sim_AM
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
@@ -30,8 +17,8 @@ def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, d
 
 def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
     """1x1 convolution"""
-    # return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
-    return CD_Conv2d(in_channels=in_planes, out_channels=out_planes, kernel_size=1, stride=stride, bias=False)
+    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+    # return CD_Conv2d(in_channels=in_planes, out_channels=out_planes, kernel_size=1, stride=stride, bias=False)
 
 
 class BasicBlock(nn.Module):
@@ -51,7 +38,14 @@ class BasicBlock(nn.Module):
     ) -> None:
         """
         Args:
-            inplanes: 
+            inplanes: num of input channels
+            planes: num of output channels
+            stride: stride in conv
+            downsample: designed downsample layer
+            groups: 
+            base_width:  
+            dilation: padding in conv
+            norm_layer: designed normalization layer
         """
         super(BasicBlock, self).__init__()
         if norm_layer is None:
@@ -68,8 +62,12 @@ class BasicBlock(nn.Module):
         self.bn2 = norm_layer(planes)
         self.downsample = downsample
         self.stride = stride
+        self.att = Sim_AM(planes) # attention
 
     def forward(self, x: Tensor) -> Tensor:
+        """
+        Residual Connection
+        """
         identity = x
 
         out = self.conv1(x)
@@ -77,6 +75,7 @@ class BasicBlock(nn.Module):
         out = self.relu(out)
 
         out = self.conv2(out)
+        out = self.att(out) # attention
         out = self.bn2(out)
 
         if self.downsample is not None:
@@ -293,10 +292,6 @@ def _resnet(
         layers: 2D shapes (L, B). L is num of layers. B is num of blocks per layer. 
     """
     model = ResNet(block, layers, **kwargs)
-    if pretrained:
-        state_dict = load_state_dict_from_url(model_urls[arch],
-                                              progress=progress)
-        model.load_state_dict(state_dict)
     return model
 
 

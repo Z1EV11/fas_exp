@@ -83,7 +83,7 @@ if __name__ == "__main__":
         param.requires_grad = True
     loss = Total_loss(device, lamb=train_cfg['cmfl_lamb'], alpha=train_cfg['cmfl_alpha'], gamma=train_cfg['cmfl_gamma']).to(device)
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=train_cfg['lr'], weight_decay=train_cfg['w_decay'])
-    scheduler = MultiStepLR(optimizer, milestones=[20,30], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[15,30], gamma=0.1)
     # acc = Accuracy()
     for epoch in range(train_cfg['num_epochs']):
         # if epoch>=1: break

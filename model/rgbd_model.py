@@ -6,7 +6,7 @@ import torch.nn as nn
 # from .squeeze_net import RGB_net, Depth_net
 from .res_net import RGB_net, Depth_net
 # from .dense_net import RGB_net, Depth_net
-# from .attention import NAM
+# from .backbone import RGB_net, Depth_net
 
 
 class RGBD_model(nn.Module):
@@ -35,7 +35,7 @@ class RGBD_model(nn.Module):
         Returns:
             p: prob of live in rgb
             q: prob of live in depth
-            r: prob of live
+            r: prob of live. the final score.
         """
         x_d = x_d[:,0:1,:,:]
         #print('[RGBD-backbone]\tx_rgb: {}\tx_d: {}'.format(x_rgb.size(), x_d.size()))
