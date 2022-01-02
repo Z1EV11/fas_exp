@@ -7,7 +7,7 @@ from .conv import CD_Conv2d
 from .attention import Sim_AM
 
 
-def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
+def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1): # -> nn.Conv2d:
     """3x3 convolution with padding"""
     # return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
     #                  padding=dilation, groups=groups, bias=False, dilation=dilation)
@@ -34,7 +34,8 @@ class BasicBlock(nn.Module):
         groups: int = 1,
         base_width: int = 64,
         dilation: int = 1,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+        att_mod=None
     ) -> None:
         """
         Args:
@@ -62,7 +63,11 @@ class BasicBlock(nn.Module):
         self.bn2 = norm_layer(planes)
         self.downsample = downsample
         self.stride = stride
-        self.att = Sim_AM(planes) # attention
+        if att_mod == 'SimAM':
+            self.conv2 = nn.Sequential(
+                self.conv2,
+                Sim_AM(planes)
+            )
 
     def forward(self, x: Tensor) -> Tensor:
         """
@@ -75,7 +80,6 @@ class BasicBlock(nn.Module):
         out = self.relu(out)
 
         out = self.conv2(out)
-        out = self.att(out) # attention
         out = self.bn2(out)
 
         if self.downsample is not None:
@@ -156,7 +160,8 @@ class ResNet(nn.Module):
         groups: int = 1,
         width_per_group: int = 64,
         replace_stride_with_dilation: Optional[List[bool]] = None,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+        att_mod=None
     ) -> None:
         r"""
         Args:
@@ -185,24 +190,24 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
+        # self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = CD_Conv2d(in_channels=3, out_channels=self.inplanes, kernel_size=7, stride=2, padding=3, bias=False) # CD_CONV
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         # init residual blocks
-        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer1 = self._make_layer(block, 64, layers[0], att_mod=att_mod)
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
-                                       dilate=replace_stride_with_dilation[0])
+                                       dilate=replace_stride_with_dilation[0], att_mod=att_mod)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2,
-                                       dilate=replace_stride_with_dilation[1])
+                                       dilate=replace_stride_with_dilation[1], att_mod=att_mod)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
-                                       dilate=replace_stride_with_dilation[2])
+                                       dilate=replace_stride_with_dilation[2], att_mod=att_mod)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
         # init Conv & BN
         for m in self.modules():
-            # if isinstance(m, nn.Conv2d):
-            if isinstance(m, CD_Conv2d):
+            if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
@@ -219,7 +224,7 @@ class ResNet(nn.Module):
                     nn.init.constant_(m.bn2.weight, 0)  # type: ignore[arg-type]
 
     def _make_layer(self, block: Type[Union[BasicBlock, Bottleneck]], planes: int, blocks: int,
-                    stride: int = 1, dilate: bool = False) -> nn.Sequential:
+                    stride: int = 1, dilate: bool = False, att_mod=None) -> nn.Sequential:
         r"""
         factory of making layer
         Args:
@@ -245,12 +250,12 @@ class ResNet(nn.Module):
         layers = []
         # adding blocks into layers
         layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
-                            self.base_width, previous_dilation, norm_layer))    # first block
+                            self.base_width, previous_dilation, norm_layer, att_mod=att_mod))    # first block
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
             layers.append(block(self.inplanes, planes, groups=self.groups,
                                 base_width=self.base_width, dilation=self.dilation,
-                                norm_layer=norm_layer))
+                                norm_layer=norm_layer, att_mod=att_mod))
 
         return nn.Sequential(*layers)
 

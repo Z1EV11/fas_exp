@@ -4,9 +4,9 @@ import torch
 import torch.nn as nn
 
 # from .squeeze_net import RGB_net, Depth_net
-from .res_net import RGB_net, Depth_net
+# from .res_net import RGB_net, Depth_net
 # from .dense_net import RGB_net, Depth_net
-# from .backbone import RGB_net, Depth_net
+from .backbone import RGB_net, Depth_net
 
 
 class RGBD_model(nn.Module):

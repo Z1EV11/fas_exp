@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 # from torch.utils.tensorboard import SummaryWriter
 
-from util.preprocessor import CASIA_SURF, read_cfg
+from util.preprocessor import CASIA_SURF, read_cfg, CASIA_CEFA
 from util.metric import Binary_Class
 
 
@@ -40,9 +40,15 @@ if __name__ == '__main__':\
         transforms.ToTensor(),
         transforms.Normalize(data_cfg['mean'], data_cfg['std']),
     ])
-    test_set = CASIA_SURF(
-        root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'val'),
-        csv_file=data_cfg['val_csv'],
+    # test_set = CASIA_SURF(
+    #     root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'test'),
+    #     csv_file=data_cfg['test_csv'],
+    #     transform=[train_transform, train_transform],
+    #     # smoothing=True
+    # )
+    test_set = CASIA_CEFA(
+        root_dir=os.path.join(root_dir, 'dataset', 'CASIA-CEFA', 'train'),
+        csv_file='4@2_train.txt',
         transform=[train_transform, train_transform],
         # smoothing=True
     )
@@ -61,12 +67,12 @@ if __name__ == '__main__':\
         label = label.float().reshape(len(label),1).to(device) # [B,1]
         output = model(rgb_map, depth_map) # (gap, r, p, q)
         pred = torch.where(output[1]>0.5, 1., 0.)
-        print("--------------------------------------------------------------------------------------")
         print('r:\t',output[1].squeeze())
         print('pred:\t',pred.squeeze())
         print('label:\t',label.squeeze())
         metric.update(pred, label)
         local_acc = calc_acc(pred, label)
         print ('Batch: {}\t ACC: {:.4f}\t'.format(i, local_acc))
-    print('ACC: {:.4f}'.format(metric.calc_ACC()))
+        print("--------------------------------------------------------------------------------------")
+    print('Model: {}\n ACC: {:.4f}\t ACER: {:.4f}'.format(test_cfg['model'], metric.calc_ACC(), 0))
     # writer.close()

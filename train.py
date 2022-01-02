@@ -12,7 +12,6 @@ import numpy as np
 from model.rgbd_model import RGBD_model
 from util.preprocessor import CASIA_SURF, read_cfg
 from util.loss import Total_loss
-from util.metric import Accuracy
 
 
 warnings.filterwarnings("ignore")
@@ -79,16 +78,17 @@ if __name__ == "__main__":
     # training
     print('Using {} device for training.'.format(device))
     model = create_model(cfg)
+    print('Model:\n', list(model.children()))
     for name,param in  model.named_parameters():
         param.requires_grad = True
     loss = Total_loss(device, lamb=train_cfg['cmfl_lamb'], alpha=train_cfg['cmfl_alpha'], gamma=train_cfg['cmfl_gamma']).to(device)
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=train_cfg['lr'], weight_decay=train_cfg['w_decay'])
-    scheduler = MultiStepLR(optimizer, milestones=[15,30], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[10,20,30,40], gamma=0.1)
     # acc = Accuracy()
     for epoch in range(train_cfg['num_epochs']):
         # if epoch>=1: break
         # print("--------------------------------------------------------------------------------------")
-        for i, (rgb_map, depth_map, label) in enumerate(train_loader):
+        for i, (rgb_map, depth_map, label) in enumerate(train_loader): 
             # if i>=1: break
             # print("--------------------------------------------------------------------------------------")
             rgb_map, depth_map = rgb_map.to(device), depth_map.to(device) # [B,3,224,224]
@@ -108,10 +108,10 @@ if __name__ == "__main__":
             # acc.update(pred, label)
             # print ('Batch [{}], Error: {:.4f}, ACC: {:.4f}'.format(i+1, error.item(), acc.calc_acc(pred,label)))
         scheduler.step() # change lr
-        print('Epoch [{}/{}], Error: {:.7f}, lr: {:.7f}'.format(epoch+1, train_cfg['num_epochs'], error.item(), optimizer.param_groups[0]['lr']))
+        print('Epoch [{}/{}],\tError: {:.7f},\tlr: {:.9f}'.format(epoch+1, train_cfg['num_epochs'], error.item(), optimizer.param_groups[0]['lr']))
         # break
     # save model
-    save_time = time.strftime("%Y-%m-%d %H-%M-%S", time.localtime()) 
-    save_path = os.path.join(root_dir, 'model', 'save', '{}-{}.pth'.format(save_time, train_cfg['net']))
+    save_time = time.strftime("%Y-%m-%d %H-%M", time.localtime())
+    save_path = os.path.join(root_dir, 'model', 'save', '{}_{}.pth'.format(save_time, train_cfg['net']))
     torch.save(model, save_path) # torch.save(model.state_dict(), save_path)
     print('Saved model: {}'.format(save_path))

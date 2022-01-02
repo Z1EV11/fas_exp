@@ -29,6 +29,6 @@ train:
   cmfl_alpha: 1
   cmfl_gamma: 3
 test:
-  model: '2021-12-25 21-39-24_resnet18_cdc.pth'
+  model: '2022-01-01 19-16_resnet18_cdc_simam.pth'
   rgb_size: [224,224]
   batch_size: 32

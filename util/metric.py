@@ -49,14 +49,14 @@ class Binary_Class():
             label = label.cpu().numpy()
         xN_cond = pred==0
         xN = np.extract(xN_cond, label)
-        FN = np.sum(xN)
-        self.FN += FN
-        self.TN += len(xN) - FN
+        fN = np.sum(xN)
+        self.FN += fN
+        self.TN += len(xN) - fN
         xP_cond = pred==1
         xP = np.extract(xP_cond, label)
-        TP = np.sum(xP)
-        self.TP += TP
-        self.FP += len(xP) - TP
+        tP = np.sum(xP)
+        self.TP += tP
+        self.FP += len(xP) - tP
 
     def calc_ACC(self):
         """
@@ -111,7 +111,7 @@ class FAS_metric(Binary_Class):
         super().reset()
         self.num_PA = 0
     
-    def calc_acer(self, pred, label):
+    def calc_ACER(self, pred, label):
         """
         Average Classification Error Rate
         Returns:
@@ -123,3 +123,15 @@ class FAS_metric(Binary_Class):
         bpcer = 1
         acer = (apcer+bpcer)/2
         return acer, apcer, bpcer
+
+    def calc_FAR(self):
+        """
+        False Acceptation Rate
+        """
+        return 1
+
+    def calc_FRR(self):
+        """
+        False Rejection Rate
+        """
+        return 1

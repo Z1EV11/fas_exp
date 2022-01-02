@@ -10,13 +10,11 @@ from .conv import CD_Conv2d
 class RGB_net(nn.Module):
     def __init__(self):
         super(RGB_net, self).__init__()
-        net = resnet18()
+        net = resnet18(att_mod='SimAM')
         features_rgb = list(net.children())
         self.net = nn.Sequential(*features_rgb[0:8])
         self.gavg_pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
-            # nn.BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-            # nn.ReLU(inplace=True),
             nn.Linear(512,1),
             nn.Sigmoid()
         )
@@ -38,20 +36,19 @@ class RGB_net(nn.Module):
 class Depth_net(nn.Module):
     def __init__(self):
         super(Depth_net, self).__init__()
-        net = resnet18()
+        net = resnet18(att_mod='SimAM')
         features_d = list(net.children())
-        temp_layer = features_d[0]
-        mean_weight = np.mean(temp_layer.weight.data.detach().numpy(),axis=1) # for 96 filters
+        temp_layer = list(features_d[0].children())
+        temp_layer = temp_layer[0]
+        mean_weight = np.mean(temp_layer.weight.data.detach().numpy(),axis=1)
         new_weight = np.zeros((64,1,7,7))
         for i in range(1):
             new_weight[:,i,:,:]=mean_weight
-        features_d[0]=CD_Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        features_d[0]=nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         features_d[0].weight.data = torch.Tensor(new_weight)
         self.net = nn.Sequential(*features_d[0:8])
         self.gavg_pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
-            # nn.BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-            # nn.ReLU(inplace=True),
             nn.Linear(512,1),
             nn.Sigmoid()
         )
