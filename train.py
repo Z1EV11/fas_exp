@@ -19,6 +19,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 cfg = read_cfg(cfg_file="./config.yml")
 data_cfg = cfg['dataset']
 train_cfg = cfg['train']
+optim_cfg = train_cfg['optim']
+loss_cfg = train_cfg['cmfl']
 root_dir = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -53,19 +55,19 @@ if __name__ == "__main__":
         transforms.ToTensor(),
         transforms.Normalize(data_cfg['mean'], data_cfg['std']),
     ])
-    train_transform_d = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.RandomResizedCrop(train_cfg['rgb_size'][0]),
-        transforms.RandomRotation(data_cfg['augmentation']['rotation_range']),
-        transforms.RandomHorizontalFlip(),
-        transforms.Resize(train_cfg['rgb_size']),
-        transforms.ToTensor(),
-        transforms.Normalize(data_cfg['mean'], data_cfg['std']),
-    ])
+    # train_transform_d = transforms.Compose([
+    #     transforms.ToPILImage(),
+    #     transforms.RandomResizedCrop(train_cfg['rgb_size'][0]),
+    #     transforms.RandomRotation(data_cfg['augmentation']['rotation_range']),
+    #     transforms.RandomHorizontalFlip(),
+    #     transforms.Resize(train_cfg['rgb_size']),
+    #     transforms.ToTensor(),
+    #     transforms.Normalize(data_cfg['mean'], data_cfg['std']),
+    # ])
     train_set = CASIA_SURF(
         root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'train'),
         csv_file=data_cfg['train_csv'],
-        transform=[train_transform_rgb, train_transform_d],
+        transform=[train_transform_rgb, train_transform_rgb],
         # smoothing=True
     )
     train_loader = DataLoader(
@@ -79,11 +81,12 @@ if __name__ == "__main__":
     print('Using {} device for training.'.format(device))
     model = create_model(cfg)
     print('Model:\n', list(model.children()))
-    for name,param in  model.named_parameters():
-        param.requires_grad = True
-    loss = Total_loss(device, lamb=train_cfg['cmfl_lamb'], alpha=train_cfg['cmfl_alpha'], gamma=train_cfg['cmfl_gamma']).to(device)
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=train_cfg['lr'], weight_decay=train_cfg['w_decay'])
-    scheduler = MultiStepLR(optimizer, milestones=[10,20,30,40], gamma=0.1)
+    # for name,param in  model.named_parameters():
+    #     param.requires_grad = True
+    # optimizer = torch.optim.NAdam(filter(lambda p: p.requires_grad, model.parameters()), lr=optim_cfg['lr'], weight_decay=optim_cfg['wd'])
+    loss = Total_loss(device, lamb=loss_cfg['lamb'], alpha=loss_cfg['alpha'], gamma=loss_cfg['gamma']).to(device)
+    optimizer = torch.optim.NAdam(model.parameters(), lr=optim_cfg['lr'], weight_decay=optim_cfg['wd'])
+    scheduler = MultiStepLR(optimizer, milestones=[10,20,30,40], gamma=0.2)
     # acc = Accuracy()
     for epoch in range(train_cfg['num_epochs']):
         # if epoch>=1: break
@@ -107,11 +110,12 @@ if __name__ == "__main__":
             # print('label:\t',label.squeeze(1))
             # acc.update(pred, label)
             # print ('Batch [{}], Error: {:.4f}, ACC: {:.4f}'.format(i+1, error.item(), acc.calc_acc(pred,label)))
+        # validate()
         scheduler.step() # change lr
         print('Epoch [{}/{}],\tError: {:.7f},\tlr: {:.9f}'.format(epoch+1, train_cfg['num_epochs'], error.item(), optimizer.param_groups[0]['lr']))
         # break
     # save model
     save_time = time.strftime("%Y-%m-%d %H-%M", time.localtime())
-    save_path = os.path.join(root_dir, 'model', 'save', '{}_{}.pth'.format(save_time, train_cfg['net']))
+    save_path = os.path.join(root_dir, 'exp', 'save', '{}_{}.pth'.format(save_time, train_cfg['net']))
     torch.save(model, save_path) # torch.save(model.state_dict(), save_path)
     print('Saved model: {}'.format(save_path))

@@ -17,18 +17,20 @@ dataset:
   std: [0.5, 0.5, 0.5]
 train:
   from: 'scratch'
-  net: 'resnet18'
+  net: 'resnet18_cdc_simam'
   rgb_size: [224,224]
   depth_size: [224, 224]
   batch_size: 64
-  lr: 0.0001
-  w_decay: 0.000001
-  eps: 0.00000001
-  num_epochs: 40
-  cmfl_lamb: 0.5
-  cmfl_alpha: 1
-  cmfl_gamma: 3
+  num_epochs: 50
+  optim:
+    lr: 0.0001
+    wd: 0.000001
+    eps: 0.00000001
+  cmfl:
+    lamb: 0.5
+    alpha: 1
+    gamma: 3
 test:
-  model: '2022-01-01 19-16_resnet18_cdc_simam.pth'
+  model: '2022-01-07 18-41_resnet18_cdc_simam.pth'
   rgb_size: [224,224]
-  batch_size: 32
+  batch_size: 64

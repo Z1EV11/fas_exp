@@ -1,18 +1,16 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as func
+import torchvision
 import numpy as np
-
-from .ResNet import resnet18
-from .conv import CD_Conv2d
 
 
 class RGB_net(nn.Module):
     def __init__(self):
         super(RGB_net, self).__init__()
-        net = resnet18(att_mod='SimAM')
-        features_rgb = list(net.children())
-        self.net = nn.Sequential(*features_rgb[0:8])
+        net = torchvision.models.squeezenet1_1()
+        features_rgb = list(net.features.children())
+        self.net = nn.Sequential(*features_rgb)
         self.gavg_pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
             nn.Linear(512,1),
@@ -36,17 +34,16 @@ class RGB_net(nn.Module):
 class Depth_net(nn.Module):
     def __init__(self):
         super(Depth_net, self).__init__()
-        net = resnet18(att_mod='SimAM')
-        features_d = list(net.children())
-        temp_layer = list(features_d[0].children())
-        temp_layer = temp_layer[0]
-        mean_weight = np.mean(temp_layer.weight.data.detach().numpy(),axis=1)
-        new_weight = np.zeros((64,1,7,7))
+        net = torchvision.models.squeezenet1_1()
+        features_d = list(net.features.children())
+        temp_layer = features_d[0]
+        mean_weight = np.mean(temp_layer.weight.data.detach().numpy(),axis=1) # for 96 filters
+        new_weight = np.zeros((64,1,3,3))
         for i in range(1):
             new_weight[:,i,:,:]=mean_weight
-        features_d[0]=nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        features_d[0]=nn.Conv2d(1, 64, kernel_size=(3, 3), stride=(2, 2), bias=False)
         features_d[0].weight.data = torch.Tensor(new_weight)
-        self.net = nn.Sequential(*features_d[0:8])
+        self.net = nn.Sequential(*features_d)
         self.gavg_pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
             nn.Linear(512,1),

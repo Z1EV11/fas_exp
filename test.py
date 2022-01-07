@@ -9,7 +9,7 @@ from torchvision import transforms
 # from torch.utils.tensorboard import SummaryWriter
 
 from util.preprocessor import CASIA_SURF, read_cfg, CASIA_CEFA
-from util.metric import Binary_Class
+from util.metric import FASMetric
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -17,7 +17,7 @@ cfg = read_cfg(cfg_file="./config.yml")
 data_cfg = cfg['dataset']
 test_cfg = cfg['test']
 root_dir = os.path.dirname(os.path.abspath(__file__))
-save_path = os.path.join(root_dir, 'model', 'save', test_cfg['model'])
+save_path = os.path.join(root_dir, 'exp', 'save', test_cfg['model'])
 
 
 def calc_acc(pred, label):
@@ -40,18 +40,17 @@ if __name__ == '__main__':\
         transforms.ToTensor(),
         transforms.Normalize(data_cfg['mean'], data_cfg['std']),
     ])
-    # test_set = CASIA_SURF(
-    #     root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'test'),
-    #     csv_file=data_cfg['test_csv'],
+    test_set = CASIA_SURF(
+        root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'val'),
+        csv_file=data_cfg['val_csv'],
+        transform=[train_transform, train_transform]
+    )
+    # test_set = CASIA_CEFA(
+    #     root_dir=os.path.join(root_dir, 'dataset', 'CASIA-CEFA', 'train'),
+    #     csv_file='4@3_train.txt',
     #     transform=[train_transform, train_transform],
     #     # smoothing=True
     # )
-    test_set = CASIA_CEFA(
-        root_dir=os.path.join(root_dir, 'dataset', 'CASIA-CEFA', 'train'),
-        csv_file='4@2_train.txt',
-        transform=[train_transform, train_transform],
-        # smoothing=True
-    )
     test_loader = DataLoader(
         dataset=test_set,
         batch_size=test_cfg['batch_size'],
@@ -60,7 +59,7 @@ if __name__ == '__main__':\
     )
     # testing
     model = torch.load(save_path).to(device)
-    metric = Binary_Class()
+    metric = FASMetric()
     # writer = SummaryWriter(cfg['log_dir'])
     for i, (rgb_map, depth_map, label) in enumerate(test_loader):
         rgb_map, depth_map = rgb_map.to(device), depth_map.to(device) # [B,3,H,W]
@@ -74,5 +73,7 @@ if __name__ == '__main__':\
         local_acc = calc_acc(pred, label)
         print ('Batch: {}\t ACC: {:.4f}\t'.format(i, local_acc))
         print("--------------------------------------------------------------------------------------")
-    print('Model: {}\n ACC: {:.4f}\t ACER: {:.4f}'.format(test_cfg['model'], metric.calc_ACC(), 0))
+    hter, far, frr = metric.calc_HTER()
+    acc = metric.calc_ACC()
+    print('Model: {}\n ACC: {:.4f}\t HTER: {:.4f}\t EER: {:.4f}\t ACER: {:.4f}'.format(test_cfg['model'], acc, hter, hter, hter))
     # writer.close()

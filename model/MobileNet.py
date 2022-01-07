@@ -8,7 +8,7 @@ import numpy as np
 class RGB_net(nn.Module):
     def __init__(self):
         super(RGB_net, self).__init__()
-        net = torchvision.models.squeezenet1_1(pretrained=True)
+        net = torchvision.models.mobilenet()
         features_rgb = list(net.features.children())
         self.net = nn.Sequential(*features_rgb)
         self.gavg_pool = nn.AdaptiveAvgPool2d(1)
@@ -34,7 +34,7 @@ class RGB_net(nn.Module):
 class Depth_net(nn.Module):
     def __init__(self):
         super(Depth_net, self).__init__()
-        net = torchvision.models.squeezenet1_1(pretrained=True)
+        net = torchvision.models.mobilenet()
         features_d = list(net.features.children())
         temp_layer = features_d[0]
         mean_weight = np.mean(temp_layer.weight.data.detach().numpy(),axis=1) # for 96 filters

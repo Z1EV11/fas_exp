@@ -22,12 +22,14 @@ class AvgMeter(object):
         self.avg = self.sum / self.count
 
 
-class Binary_Class():
+class BinaryClassMetric():
     """
     Binary Classification Metric
+        Positive: 1
+        Negative: 0
     """
     def __init__(self):
-        super(Binary_Class, self).__init__()
+        super(BinaryClassMetric, self).__init__()
         self.TP = 0
         self.FP = 0
         self.TN = 0
@@ -41,8 +43,7 @@ class Binary_Class():
         self.FN = 0
     
     def update(self, pred, label):
-        num = len(label)
-        if len(pred) != num:
+        if len(pred) != len(label):
             raise NotImplementedError
         if type(pred) is not np.ndarray or type(label) is not np.ndarray:
             pred = pred.cpu().numpy()
@@ -94,44 +95,57 @@ class Binary_Class():
         return F1
 
 
-class FAS_metric(Binary_Class):
+class FASMetric(BinaryClassMetric):
     """
     Face Anti-Spoofing Metric
     """
-    def __init__(self, num_PA):
+    def __init__(self, num_PA=1):
         """
         Args:
             num_PA: number of Presentation Attack types
         """
-        super(FAS_metric, self).__init__()
+        super(FASMetric, self).__init__()
         self.num_PA = num_PA
         self.reset()
     
     def reset(self):
         super().reset()
-        self.num_PA = 0
+        self.num_PA = 1
+
+    # def update(self, pred, label):
+    #     if len(pred) != len(label):
+    #         raise NotImplementedError
+    #     if type(pred) is not np.ndarray or type(label) is not np.ndarray:
+    #         pred = pred.cpu().numpy()
+    #         label = label.cpu().numpy()
+    #     super().update(pred, label)
+    #     num_live = np.sum(label)
+    #     num_fake = len(label) - num_live
+    #     self.num_live += num_live
+    #     self.num_fake += num_fake
     
-    def calc_ACER(self, pred, label):
+    def calc_ACER(self):
         """
         Average Classification Error Rate
+            Live: 0
+            Fake: 1
         Returns:
-            ACER: (APCER+BPCER)/2
-            APCER: Attack Presentation Classification Error Rate
-            BPCER: Bonafide Presentation Classification Error Rate
+            ACER: (max{APCER}+BPCER)/2
+            APCER: Attack Presentation Classification Error Rate == max{FAR}
+            BPCER: Bona fide Presentation Classification Error Rate == FRR
         """
-        apcer = 1
-        bpcer = 1
-        acer = (apcer+bpcer)/2
+        apcer = self.FN/self.num_fake
+        bpcer = self.FP/self.num_live
+        acer = (apcer+bpcer)/2.0
         return acer, apcer, bpcer
 
-    def calc_FAR(self):
+    def calc_HTER(self):
         """
-        False Acceptation Rate
+        Half Total Error Rate(HTER)
+        FAR(False Acceptation Rate): Fake is judged as Live
+        FRR(False Rejection Rate):  Live is judged as Fake
         """
-        return 1
-
-    def calc_FRR(self):
-        """
-        False Rejection Rate
-        """
-        return 1
+        far = self.FP / (self.FP + self.TN)
+        frr = self.FN / (self.TP + self.FN)
+        hter = (far + frr) / 2.0
+        return hter, far, frr
