@@ -8,7 +8,7 @@ from .attention import Sim_AM
 
 
 """
-CDC + ResNet18 + SimAM
+ResNet18 + CDC +  SimAM + Multi-scale feature fusion
 """
 
 
@@ -213,6 +213,7 @@ class ResNet(nn.Module):
                                        dilate=replace_stride_with_dilation[2], att_mod=att_mod)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
+        self.downsample_7x7 = nn.Upsample(size=(7,7), mode='bilinear')
         # init Conv & BN
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -274,11 +275,14 @@ class ResNet(nn.Module):
         x = self.relu(x)
         x = self.maxpool(x)
 
-        x1 = self.layer1(x)
-        x2 = self.layer2(x1)
-        x3 = self.layer3(x2)
-        x = self.layer4(x3)
-        # x = torch.cat([x1,x2,x3,x], dim=1)
+        x = self.layer1(x)
+        x1 = self.downsample_7x7(x)
+        x = self.layer2(x)
+        x2 = self.downsample_7x7(x)
+        x = self.layer3(x)
+        x3 = self.downsample_7x7(x)
+        x = self.layer4(x)
+        x = torch.cat([x1,x2,x3,x], dim=1)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)
@@ -351,9 +355,6 @@ def resnet50(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> 
 
 
 import torch.nn.functional as func
-
-# from .ResNet import resnet18
-# from .conv import CD_Conv2d
 
 
 class RGB_net(nn.Module):

@@ -10,17 +10,17 @@ dataset:
     contrast: 0.5
     saturation: 0.5
     hue: 0.5
-  train_csv: 'train_list.txt'
+  train_csv: 'train_10_list.txt'
   val_csv: 'val_private_list.txt'
   test_csv: 'test_private_list.txt'
   mean: [0.5, 0.5, 0.5]
   std: [0.5, 0.5, 0.5]
 train:
   from: 'scratch'
-  net: 'resnet18_cdc_simam'
+  net: 'densenet121'
   rgb_size: [224,224]
   depth_size: [224, 224]
-  batch_size: 64
+  batch_size: 32
   num_epochs: 50
   optim:
     lr: 0.0001
@@ -30,7 +30,9 @@ train:
     lamb: 0.5
     alpha: 1
     gamma: 3
+val:
+  batch_size: 32
 test:
-  model: '2022-01-07 18-41_resnet18_cdc_simam.pth'
+  model: '2022-01-13 00-00_densenet121.pth'
   rgb_size: [224,224]
-  batch_size: 64
+  batch_size: 16

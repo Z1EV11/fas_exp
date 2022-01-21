@@ -38,13 +38,7 @@ class Depth_net(nn.Module):
         super(Depth_net, self).__init__()
         net = torchvision.models.resnet18()
         features_d = list(net.children())
-        # temp_layer = features_d[0]
-        # mean_weight = np.mean(temp_layer.weight.data.detach().numpy(),axis=1) # for 96 filters
-        # new_weight = np.zeros((64,1,7,7))
-        # for i in range(1):
-        #     new_weight[:,i,:,:]=mean_weight
         features_d[0]=nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        # features_d[0].weight.data = torch.Tensor(new_weight)
         self.net = nn.Sequential(*features_d[0:8])
         self.gavg_pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(

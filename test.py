@@ -32,7 +32,7 @@ def calc_acc(pred, label):
 
 
 if __name__ == '__main__':\
-    # preprocessing
+    # data
     train_transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.RandomResizedCrop(test_cfg['rgb_size'][0]),
@@ -41,8 +41,8 @@ if __name__ == '__main__':\
         transforms.Normalize(data_cfg['mean'], data_cfg['std']),
     ])
     test_set = CASIA_SURF(
-        root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'val'),
-        csv_file=data_cfg['val_csv'],
+        root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'test'),
+        csv_file=data_cfg['test_csv'],
         transform=[train_transform, train_transform]
     )
     # test_set = CASIA_CEFA(
@@ -75,5 +75,5 @@ if __name__ == '__main__':\
         print("--------------------------------------------------------------------------------------")
     hter, far, frr = metric.calc_HTER()
     acc = metric.calc_ACC()
-    print('Model: {}\n ACC: {:.4f}\t HTER: {:.4f}\t EER: {:.4f}\t ACER: {:.4f}'.format(test_cfg['model'], acc, hter, hter, hter))
+    print('Model: {}\n ACC: {:.4f}\t EER: {:.4f}\t HTER: {:.4f}\t ACER: {:.4f}'.format(test_cfg['model'], acc, 0, hter, 0))
     # writer.close()
