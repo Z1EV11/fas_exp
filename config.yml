@@ -17,11 +17,11 @@ dataset:
   std: [0.5, 0.5, 0.5]
 train:
   from: 'scratch'
-  net: 'densenet121'
+  net: 'resnet18-cdc-simam-fusion'
   rgb_size: [224,224]
   depth_size: [224, 224]
-  batch_size: 32
-  num_epochs: 50
+  batch_size: 64
+  num_epochs: 100
   optim:
     lr: 0.0001
     wd: 0.000001
@@ -31,8 +31,8 @@ train:
     alpha: 1
     gamma: 3
 val:
-  batch_size: 32
+  batch_size: 64
 test:
-  model: '2022-01-13 00-00_densenet121.pth'
+  model: '2022-04-17 13-01_resnet18-cdc-simam-fusion.pth'
   rgb_size: [224,224]
-  batch_size: 16
+  batch_size: 64

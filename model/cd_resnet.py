@@ -8,6 +8,19 @@ from .attention import Sim_AM
 
 
 """
+DenseNet
+"""
+def transition_block(in_channels, out_channels):
+    """control the number of channels"""
+    blk = nn.Sequential(
+            nn.BatchNorm2d(in_channels), 
+            nn.ReLU(),
+            nn.Conv2d(in_channels, out_channels, kernel_size=1),
+            nn.AvgPool2d(kernel_size=2, stride=2))
+    return blk
+
+
+"""
 ResNet18 + CDC +  SimAM + Multi-scale feature fusion
 """
 
@@ -71,7 +84,7 @@ class BasicBlock(nn.Module):
             self.conv2 = nn.Sequential(
                 self.conv2,
                 Sim_AM(planes)
-            )
+            )                                                                                   
 
     def forward(self, x: Tensor) -> Tensor:
         """
@@ -213,7 +226,23 @@ class ResNet(nn.Module):
                                        dilate=replace_stride_with_dilation[2], att_mod=att_mod)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
-        self.downsample_7x7 = nn.Upsample(size=(7,7), mode='bilinear')
+        # [+] mulit-scale fusion
+        # self.downsample1_7x7 = nn.Sequential(
+        #     nn.Upsample(size=(7,7), mode='bilinear'),
+        #     self._norm_layer(128 * block.expansion)
+        # )
+        # self.downsample2_7x7 = nn.Sequential(
+        #     nn.Upsample(size=(7,7), mode='bilinear'),
+        #     self._norm_layer(256 * block.expansion)
+        # )
+        # self.downsample3_7x7 = nn.Sequential(
+        #     nn.Upsample(size=(7,7), mode='bilinear'),
+        #     self._norm_layer(512 * block.expansion)
+        # )
+        # self.downsample4_7x7 = nn.Sequential(
+        #     nn.Upsample(size=(7,7), mode='bilinear'),
+            
+        # )
         # init Conv & BN
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -275,14 +304,19 @@ class ResNet(nn.Module):
         x = self.relu(x)
         x = self.maxpool(x)
 
-        x = self.layer1(x)
-        x1 = self.downsample_7x7(x)
-        x = self.layer2(x)
-        x2 = self.downsample_7x7(x)
-        x = self.layer3(x)
-        x3 = self.downsample_7x7(x)
+        x = self.layer1(x)  # (B,64,H,W) -> (B,128,H,W)
+        print('[backbone]\tlayer1: {}\t'.format(x.size()))
+        x1 = self.downsample_7x7(x) # [+]
+        x = self.layer2(x)  # (B,128,H,W) -> (B,256,H,W)
+        print('[backbone]\tlayer2: {}\t'.format(x.size()))
+        x2 = self.downsample_7x7(x) # [+]
+        x = self.layer3(x)  # (B,256,H,W) -> (B,512,H,W)
+        print('[backbone]\tlayer3: {}\t'.format(x.size()))
+        x3 = self.downsample_7x7(x) # [+]
         x = self.layer4(x)
-        x = torch.cat([x1,x2,x3,x], dim=1)
+        x = self._norm_layer(512)
+        print('[backbone]\tlayer4: {}\t'.format(x.size()))
+        x = torch.cat([x1,x2,x3,x], dim=1) # [+]
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)

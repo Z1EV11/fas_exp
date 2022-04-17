@@ -40,17 +40,22 @@ if __name__ == '__main__':\
         transforms.ToTensor(),
         transforms.Normalize(data_cfg['mean'], data_cfg['std']),
     ])
-    test_set = CASIA_SURF(
-        root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'test'),
-        csv_file=data_cfg['test_csv'],
-        transform=[train_transform, train_transform]
-    )
-    # test_set = CASIA_CEFA(
-    #     root_dir=os.path.join(root_dir, 'dataset', 'CASIA-CEFA', 'train'),
-    #     csv_file='4@3_train.txt',
-    #     transform=[train_transform, train_transform],
-    #     # smoothing=True
+    # test_set = CASIA_SURF(
+    #     root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'test'),
+    #     csv_file=data_cfg['val_csv'],
+    #     transform=[train_transform, train_transform]
     # )
+    # test_set = CASIA_SURF(
+    #     root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'test'),
+    #     csv_file=data_cfg['test_csv'],
+    #     transform=[train_transform, train_transform]
+    # )
+    test_set = CASIA_CEFA(
+        root_dir=os.path.join(root_dir, 'dataset', 'CASIA-CEFA', 'train'),
+        csv_file='4@3_train.txt',
+        transform=[train_transform, train_transform],
+        # smoothing=True
+    )
     test_loader = DataLoader(
         dataset=test_set,
         batch_size=test_cfg['batch_size'],
@@ -66,9 +71,9 @@ if __name__ == '__main__':\
         label = label.float().reshape(len(label),1).to(device) # [B,1]
         output = model(rgb_map, depth_map) # (gap, r, p, q)
         pred = torch.where(output[1]>0.5, 1., 0.)
-        print('r:\t',output[1].squeeze())
-        print('pred:\t',pred.squeeze())
-        print('label:\t',label.squeeze())
+        # print('r:\t',output[1].squeeze())
+        # print('pred:\t',pred.squeeze())
+        # print('label:\t',label.squeeze())
         metric.update(pred, label)
         local_acc = calc_acc(pred, label)
         print ('Batch: {}\t ACC: {:.4f}\t'.format(i, local_acc))

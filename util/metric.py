@@ -34,6 +34,7 @@ class BinaryClassMetric():
         self.FP = 0
         self.TN = 0
         self.FN = 0
+        self.ROC = []
         self.reset()
 
     def reset(self):
@@ -106,6 +107,7 @@ class FASMetric(BinaryClassMetric):
         """
         super(FASMetric, self).__init__()
         self.num_PA = num_PA
+        self.score = []
         self.reset()
     
     def reset(self):
@@ -142,10 +144,14 @@ class FASMetric(BinaryClassMetric):
     def calc_HTER(self):
         """
         Half Total Error Rate(HTER)
+            Live: 1
+            Fake: 0
         FAR(False Acceptation Rate): Fake is judged as Live
         FRR(False Rejection Rate):  Live is judged as Fake
         """
-        far = self.FP / (self.FP + self.TN)
-        frr = self.FN / (self.TP + self.FN)
+        # CASIA {fake:0, live:1}
+        far = self.FP / (self.FP + self.TN) # TPR
+        frr = self.FN / (self.TP + self.FN) # FPR
+        self.ROC.append([far,frr])
         hter = (far + frr) / 2.0
         return hter, far, frr
