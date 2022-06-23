@@ -18,8 +18,8 @@ dataset:
 train:
   from: 'scratch'
   net: 'resnet18-cdc-simam-fusion'
-  rgb_size: [224,224]
-  depth_size: [224, 224]
+  rgb_size: [128,128]
+  depth_size: [128, 128]
   batch_size: 64
   num_epochs: 100
   optim:
@@ -33,6 +33,6 @@ train:
 val:
   batch_size: 64
 test:
-  model: '2022-04-17 13-01_resnet18-cdc-simam-fusion.pth'
-  rgb_size: [224,224]
+  model: '2022-04-30 17-02_resnet18-cdc-simam-fusion.pth'
+  rgb_size: [128,128]
   batch_size: 64

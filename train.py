@@ -67,15 +67,15 @@ if __name__ == "__main__":
         transforms.ToTensor(),
         transforms.Normalize(data_cfg['mean'], data_cfg['std']),
     ])
-    # train_transform_d = transforms.Compose([
-    #     transforms.ToPILImage(),
-    #     transforms.RandomResizedCrop(train_cfg['rgb_size'][0]),
-    #     transforms.RandomRotation(data_cfg['augmentation']['rotation_range']),
-    #     transforms.RandomHorizontalFlip(),
-    #     transforms.Resize(train_cfg['rgb_size']),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize(data_cfg['mean'], data_cfg['std']),
-    # ])
+    train_transform_d = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.RandomResizedCrop(train_cfg['rgb_size'][0]),
+        transforms.RandomRotation(data_cfg['augmentation']['rotation_range']),
+        transforms.RandomHorizontalFlip(),
+        transforms.Resize(train_cfg['depth_size']),
+        transforms.ToTensor(),
+        transforms.Normalize(data_cfg['mean'], data_cfg['std']),
+    ])
     train_set = CASIA_SURF(
         root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'train'),
         csv_file=data_cfg['train_csv'],
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     )
     # model
     model = create_model(cfg)
-    # print('Using {} device for training.\nModel:\n{}'.format(device, list(model.children())))
+    print('Using {} device for training.\nModel:\n{}'.format(device, list(model.children())))
     # for name,param in  model.named_parameters():
     #     param.requires_grad = True
     # optimizer = torch.optim.NAdam(filter(lambda p: p.requires_grad, model.parameters()), lr=optim_cfg['lr'], weight_decay=optim_cfg['wd'])
@@ -114,10 +114,10 @@ if __name__ == "__main__":
     metric = FASMetric()
     # training
     for epoch in range(train_cfg['num_epochs']):
-        if epoch>=1: break
+        # if epoch>=1: break
         print("--------------------------------------------------------------------------------------")
         for i, (rgb_map, depth_map, label) in enumerate(train_loader): 
-            if i>=1: break
+            # if i>=1: break
             # print("--------------------------------------------------------------------------------------")
             rgb_map, depth_map = rgb_map.to(device), depth_map.to(device) # [B,3,224,224]
             output = model(rgb_map, depth_map) # (gap, r, p, q)
@@ -130,9 +130,9 @@ if __name__ == "__main__":
         scheduler.step() # change lr
         print('[train]\tEpoch [{}/{}],\tError: {:.7f},\tlr: {:.9f}'.format(epoch+1, train_cfg['num_epochs'], error.item(), optimizer.param_groups[0]['lr']))
         validate(model, val_loader, metric, device)
-        break
+        # break
     # save model
-    # save_time = time.strftime("%Y-%m-%d %H-%M", time.localtime())
-    # save_path = os.path.join(root_dir, 'exp', 'save', '{}_{}.pth'.format(save_time, train_cfg['net']))
-    # torch.save(model, save_path) # torch.save(model.state_dict(), save_path)
-    # print('Saved model: {}'.format(save_path))
+    save_time = time.strftime("%Y-%m-%d %H-%M", time.localtime())
+    save_path = os.path.join(root_dir, 'exp', 'save', '{}_{}.pth'.format(save_time, train_cfg['net']))
+    torch.save(model, save_path) # torch.save(model.state_dict(), save_path)
+    print('Saved model: {}'.format(save_path))

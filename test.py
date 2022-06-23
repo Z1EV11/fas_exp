@@ -1,5 +1,7 @@
 import math
 import os
+from datetime import datetime
+from turtle import shape
 
 import torch
 import torch.nn as nn
@@ -41,21 +43,21 @@ if __name__ == '__main__':\
         transforms.Normalize(data_cfg['mean'], data_cfg['std']),
     ])
     # test_set = CASIA_SURF(
-    #     root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'test'),
+    #     root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'val'),
     #     csv_file=data_cfg['val_csv'],
     #     transform=[train_transform, train_transform]
     # )
-    # test_set = CASIA_SURF(
-    #     root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'test'),
-    #     csv_file=data_cfg['test_csv'],
-    #     transform=[train_transform, train_transform]
-    # )
-    test_set = CASIA_CEFA(
-        root_dir=os.path.join(root_dir, 'dataset', 'CASIA-CEFA', 'train'),
-        csv_file='4@3_train.txt',
-        transform=[train_transform, train_transform],
-        # smoothing=True
+    test_set = CASIA_SURF(
+        root_dir=os.path.join(root_dir, 'dataset', data_cfg['name'], 'test'),
+        csv_file=data_cfg['test_csv'],
+        transform=[train_transform, train_transform]
     )
+    # test_set = CASIA_CEFA(
+    #     root_dir=os.path.join(root_dir, 'dataset', 'CASIA-CEFA', 'train'),
+    #     csv_file='4@3_train.txt',
+    #     transform=[train_transform, train_transform],
+    #     # smoothing=True
+    # )
     test_loader = DataLoader(
         dataset=test_set,
         batch_size=test_cfg['batch_size'],
@@ -64,10 +66,13 @@ if __name__ == '__main__':\
     )
     # testing
     model = torch.load(save_path).to(device)
+    print('Using {} device for training.\nModel:\n{}'.format(device, list(model.children())))
     metric = FASMetric()
+    start_time = datetime.now()
     # writer = SummaryWriter(cfg['log_dir'])
     for i, (rgb_map, depth_map, label) in enumerate(test_loader):
         rgb_map, depth_map = rgb_map.to(device), depth_map.to(device) # [B,3,H,W]
+        print(rgb_map.shape)
         label = label.float().reshape(len(label),1).to(device) # [B,1]
         output = model(rgb_map, depth_map) # (gap, r, p, q)
         pred = torch.where(output[1]>0.5, 1., 0.)
@@ -78,7 +83,9 @@ if __name__ == '__main__':\
         local_acc = calc_acc(pred, label)
         print ('Batch: {}\t ACC: {:.4f}\t'.format(i, local_acc))
         print("--------------------------------------------------------------------------------------")
+    end_time = datetime.now()
+    diff_time = (end_time - start_time).seconds
     hter, far, frr = metric.calc_HTER()
     acc = metric.calc_ACC()
-    print('Model: {}\n ACC: {:.4f}\t EER: {:.4f}\t HTER: {:.4f}\t ACER: {:.4f}'.format(test_cfg['model'], acc, 0, hter, 0))
+    print('Model: {}\n ACC: {:.4f}\t EER: {:.4f}\t HTER: {:.4f}\t TIME: {:.4f}'.format(test_cfg['model'], acc, 0, hter, diff_time))
     # writer.close()

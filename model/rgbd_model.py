@@ -25,7 +25,7 @@ class RGBD_model(nn.Module):
         self.depth_net = Depth_net().to(device)
         self.classifier = nn.Sequential(
             # nn.Sigmoid(),
-            nn.Linear(1024,1), # diy by backbone
+            nn.Linear(1920,1), # diy by backbone
             nn.Sigmoid()
         )
 

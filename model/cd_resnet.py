@@ -184,7 +184,7 @@ class ResNet(nn.Module):
         r"""
         Args:
             block: designed block uesd in resnet
-            layers: 2D shapes (L, B). L is num of layers. B is num of blocks per layer. 
+            layers: 2D shapes (L, B). L is the number of layers. B is the number of blocks per layer. 
             num_classes: 
             zero_init_residual: 
             groups: 
@@ -226,6 +226,7 @@ class ResNet(nn.Module):
                                        dilate=replace_stride_with_dilation[2], att_mod=att_mod)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
+        self.downsample_8x8 = nn.Upsample(size=(4, 4), mode='bilinear') # [+] {batchsize:32, wh:128} -> 8
         # [+] mulit-scale fusion
         # self.downsample1_7x7 = nn.Sequential(
         #     nn.Upsample(size=(7,7), mode='bilinear'),
@@ -304,22 +305,22 @@ class ResNet(nn.Module):
         x = self.relu(x)
         x = self.maxpool(x)
 
-        x = self.layer1(x)  # (B,64,H,W) -> (B,128,H,W)
-        print('[backbone]\tlayer1: {}\t'.format(x.size()))
-        x1 = self.downsample_7x7(x) # [+]
-        x = self.layer2(x)  # (B,128,H,W) -> (B,256,H,W)
-        print('[backbone]\tlayer2: {}\t'.format(x.size()))
-        x2 = self.downsample_7x7(x) # [+]
-        x = self.layer3(x)  # (B,256,H,W) -> (B,512,H,W)
-        print('[backbone]\tlayer3: {}\t'.format(x.size()))
-        x3 = self.downsample_7x7(x) # [+]
-        x = self.layer4(x)
-        x = self._norm_layer(512)
-        print('[backbone]\tlayer4: {}\t'.format(x.size()))
+        x = self.layer1(x)  # (B,64,56,56) -> (B,64,56,56)
+        # print('[backbone]\tlayer1: {}\t'.format(x.size()))
+        x1 = self.downsample_8x8(x) # [+]
+        x = self.layer2(x)  # (B,64,56,56) -> (B,128,28,28)
+        # print('[backbone]\tlayer2: {}\t'.format(x.size()))
+        x2 = self.downsample_8x8(x) # [+]
+        x = self.layer3(x)  # (B,256,14,14) -> (B,512,14,14)
+        # print('[backbone]\tlayer3: {}\t'.format(x.size()))
+        x3 = self.downsample_8x8(x) # [+]
+        x = self.layer4(x)  # (B,256,14,14) -> (B,512,7,7)
+        # x = self._norm_layer(512)
+        # print('[backbone]\tlayer4: {}\t'.format(x.size()))
         x = torch.cat([x1,x2,x3,x], dim=1) # [+]
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
+        # x = self.avgpool(x)
+        # x = torch.flatten(x, 1)
+        # x = self.fc(x)
 
         return x
 
@@ -340,7 +341,7 @@ def _resnet(
     Args:
         arch: type of resnet
         block: designed block uesd in resnet
-        layers: 2D shapes (L, B). L is num of layers. B is num of blocks per layer. 
+        layers: 2D shapes (L, B). L is the number of layers. B is the number of blocks per layer. 
     """
     model = ResNet(block, layers, **kwargs)
     return model
@@ -394,21 +395,21 @@ import torch.nn.functional as func
 class RGB_net(nn.Module):
     def __init__(self):
         super(RGB_net, self).__init__()
-        net = resnet18(
+        self.net = resnet18(
             att_mod='SimAM'
         )
-        features_rgb = list(net.children())
-        self.net = nn.Sequential(*features_rgb[0:8])
+        # features_rgb = list(net.children())
+        # self.net = nn.Sequential(*features_rgb[0:8])
         self.gavg_pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
-            nn.Linear(512,1),
+            nn.Linear(960,1),
             nn.Sigmoid()
         )
 
     def forward(self, x):
         """
         Args:
-            x: rgb-image. [B,3,W,W]
+            x: rgb-image. (B,3,224,224)
         """
         y = self.net(x)
         # print('[RGB-backbone]\ty_rgb: {}'.format(y.size()))
@@ -422,11 +423,11 @@ class RGB_net(nn.Module):
 class Depth_net(nn.Module):
     def __init__(self):
         super(Depth_net, self).__init__()
-        net = resnet18(
+        self.net = resnet18(
             in_mod='Depth',
             att_mod='SimAM'
         )
-        features_d = list(net.children())
+        # features_d = list(net.children())
         # temp_layer = list(features_d[0].children())
         # temp_layer = temp_layer[0]
         # mean_weight = np.mean(temp_layer.weight.data.detach().numpy(),axis=1)
@@ -435,17 +436,17 @@ class Depth_net(nn.Module):
         #     new_weight[:,i,:,:]=mean_weight
         # features_d[0]=nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         # features_d[0].weight.data = torch.Tensor(new_weight)
-        self.net = nn.Sequential(*features_d[0:8])
+        # self.net = nn.Sequential(*features_d[0:8])
         self.gavg_pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
-            nn.Linear(512,1),
+            nn.Linear(960,1),
             nn.Sigmoid()
         )
     
     def forward(self, x):
         """
         Args:
-            x: d-image. [B,1,W,W]
+            x: d-image. (B,1,128,128)
         """
         y = self.net(x)
         # print('[D-backbone]\ty_d: {}'.format(y.size()))
